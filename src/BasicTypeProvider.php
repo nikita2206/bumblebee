@@ -32,4 +32,12 @@ class BasicTypeProvider implements TypeProvider
         return $this->types[$type];
     }
 
+    /**
+     * @return TypeMetadata[]|\Traversable
+     */
+    public function all()
+    {
+        return $this->types;
+    }
+
 }

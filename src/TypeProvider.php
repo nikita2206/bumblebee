@@ -15,4 +15,9 @@ interface TypeProvider
      */
     public function get($type);
 
+    /**
+     * @return TypeMetadata[]|\Traversable
+     */
+    public function all();
+
 }

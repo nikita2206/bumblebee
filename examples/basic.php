@@ -51,6 +51,12 @@ $transformerProvider = new \Bumblebee\LocatorTransformerProvider([
 
 $transformer = new Transformer($typeProvider, $transformerProvider);
 
+
+$errors = $transformer->validateTypes();
+
+echo "Errors:", PHP_EOL;
+var_dump($errors);
+
 /**
  * We will use this class to transform it to an array
  */

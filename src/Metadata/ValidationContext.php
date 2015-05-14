@@ -20,12 +20,26 @@ class ValidationContext
 
     public function validateLater($type, $askedFrom)
     {
-        $this->deferredValidationQueue[$type][] = $askedFrom;
+        if ( ! $this->hasBeenValidated($type)) {
+            $this->deferredValidationQueue[$type][] = $askedFrom;
+        }
+    }
+
+    public function getDeferredQueueAndClean()
+    {
+        $queue = $this->deferredValidationQueue;
+        $this->deferredValidationQueue = [];
+        return $queue;
     }
 
     public function markValidated($type)
     {
         $this->typesValidated[$type] = true;
+    }
+
+    public function hasBeenValidated($type)
+    {
+        return isset($this->typesValidated[$type]);
     }
 
     public function getCurrentlyValidatingType()

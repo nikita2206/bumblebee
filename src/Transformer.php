@@ -3,6 +3,8 @@
 namespace Bumblebee;
 
 use Bumblebee\Exception\InvalidTypeException;
+use Bumblebee\Metadata\ValidationContext;
+use Bumblebee\Metadata\ValidationError;
 
 class Transformer
 {
@@ -35,6 +37,49 @@ class Transformer
         $transformer  = $this->transformers->get($typeMetadata->getTransformer());
 
         return $transformer->transform($input, $typeMetadata, $this);
+    }
+
+    /**
+     * @return ValidationError[]
+     */
+    public function validateTypes()
+    {
+        $validationContext = new ValidationContext();
+        $errors = [];
+
+        foreach ($this->types->all() as $type => $metadata) {
+            $validationContext->setCurrentlyValidatingType($type);
+            $curErrors = $this->transformers->get($metadata->getTransformer())->validateMetadata($validationContext, $metadata);
+            $validationContext->markValidated($type);
+
+            if ($curErrors) {
+                $errors[$type] = $curErrors;
+            }
+        }
+
+        while ($queue = $validationContext->getDeferredQueueAndClean()) {
+            foreach ($queue as $type => $askedFromTypes) {
+                if ($validationContext->hasBeenValidated($type)) {
+                    continue;
+                }
+
+                try {
+                    $metadata = $this->types->get($type);
+
+                    $validationContext->setCurrentlyValidatingType($type);
+                    $curErrors = $this->transformers->get($metadata->getTransformer())->validateMetadata($validationContext, $metadata);
+                    $validationContext->markValidated($type);
+
+                    if ($curErrors) {
+                        $errors[$type] = $curErrors;
+                    }
+                } catch (InvalidTypeException $e) {
+                    $errors[$type][] = new ValidationError(sprintf("Type wasn't found, was referenced from: %s", implode(", ", $askedFromTypes)));
+                }
+            }
+        }
+
+        return $errors;
     }
 
 }
