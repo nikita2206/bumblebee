@@ -2,6 +2,7 @@
 
 namespace Bumblebee;
 
+use Bumblebee\Exception\InvalidTypeException;
 use Bumblebee\Metadata\TypeMetadata;
 
 interface TypeProvider

@@ -2,6 +2,8 @@
 
 namespace Bumblebee;
 
+use Bumblebee\Exception\InvalidTypeException;
+
 class Transformer
 {
 
@@ -25,15 +27,14 @@ class Transformer
      * @param mixed $input
      * @param string $type
      * @return mixed
-     * @throws InvalidDataException
      * @throws InvalidTypeException
      */
     public function transform($input, $type)
     {
         $typeMetadata = $this->types->get($type);
-        $transformer  = $this->transformers->get($typeMetadata->transformer);
+        $transformer  = $this->transformers->get($typeMetadata->getTransformer());
 
-        return $transformer->transform($input, $typeMetadata->options);
+        return $transformer->transform($input, $typeMetadata, $this);
     }
 
 }

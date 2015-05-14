@@ -5,6 +5,16 @@ namespace Bumblebee\Metadata;
 class ValidationError
 {
 
-    protected $path;
+    protected $message;
+
+    public function __construct($message)
+    {
+        $this->message = $message;
+    }
+
+    public function getMessage()
+    {
+        return $this->message;
+    }
 
 }

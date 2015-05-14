@@ -8,11 +8,19 @@ class TypeMetadata
     /**
      * @var string
      */
-    public $transformer;
+    protected $transformer;
 
     public function __construct($transformer)
     {
         $this->transformer = $transformer;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTransformer()
+    {
+        return $this->transformer;
     }
 
 }
