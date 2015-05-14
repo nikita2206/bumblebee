@@ -32,9 +32,11 @@ class CustomTransformer implements TypeTransformer
 $typeProvider = new \Bumblebee\BasicTypeProvider([
     "first_type" => new ObjectArrayMetadata([
         new ObjectArrayFieldMetadata(null, "stuff", "getStuff", true),
-        new ObjectArrayFieldMetadata("second_type", "foo", "foo", false)
+        new ObjectArrayFieldMetadata("second_type", "foo", "foo", false),
+        new ObjectArrayFieldMetadata("datetime_iso8601", "created_at", "getDate", true)
     ]),
-    "second_type" => new TypeMetadata("custom")
+    "second_type" => new TypeMetadata("custom"),
+    "datetime_iso8601" => new \Bumblebee\Metadata\DateTimeMetadata(DATE_ISO8601)
 ]);
 
 /**
@@ -43,7 +45,8 @@ $typeProvider = new \Bumblebee\BasicTypeProvider([
  */
 $transformerProvider = new \Bumblebee\LocatorTransformerProvider([
     "object_array" => 'Bumblebee\TypeTransformer\ObjectArrayTransformer',
-    "custom" => 'CustomTransformer'
+    "custom" => 'CustomTransformer',
+    "datetime_text" => 'Bumblebee\TypeTransformer\DateTimeTextTransformer'
 ]);
 
 $transformer = new Transformer($typeProvider, $transformerProvider);
@@ -59,6 +62,11 @@ class FirstClass
     public function getStuff()
     {
         return md5(mt_rand());
+    }
+
+    public function getDate()
+    {
+        return new DateTimeImmutable();
     }
 
 }
