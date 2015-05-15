@@ -2,6 +2,7 @@
 
 namespace Bumblebee\TypeTransformer;
 
+use Bumblebee\Compilation\CompilationContext;
 use Bumblebee\Metadata\ObjectArrayFieldMetadata;
 use Bumblebee\Metadata\ObjectArrayMetadata;
 use Bumblebee\Metadata\TypeMetadata;
@@ -9,7 +10,7 @@ use Bumblebee\Metadata\ValidationContext;
 use Bumblebee\Metadata\ValidationError;
 use Bumblebee\Transformer;
 
-class ObjectArrayTransformer implements TypeTransformer
+class ObjectArrayTransformer implements CompilableTypeTransformer
 {
 
     /**
@@ -71,6 +72,22 @@ class ObjectArrayTransformer implements TypeTransformer
         }
 
         return $errors;
+    }
+
+    /**
+     * @param CompilationContext $ctx
+     * @param TypeMetadata $metadata
+     * @return void
+     */
+    public function compile(CompilationContext $ctx, TypeMetadata $metadata)
+    {
+        if ( ! $metadata instanceof ObjectArrayMetadata) {
+            throw new \InvalidArgumentException();
+        }
+
+        foreach ($metadata->getFields() as $field) {
+            $field->
+        }
     }
 
 }

@@ -2,13 +2,16 @@
 
 namespace Bumblebee\TypeTransformer;
 
+use Bumblebee\Compilation\CompilationContext;
+use Bumblebee\Compilation\ExpressionMethodCallable;
+use Bumblebee\Compilation\Variable;
 use Bumblebee\Metadata\DateTimeMetadata;
 use Bumblebee\Metadata\TypeMetadata;
 use Bumblebee\Metadata\ValidationContext;
 use Bumblebee\Metadata\ValidationError;
 use Bumblebee\Transformer;
 
-class DateTimeTextTransformer implements TypeTransformer
+class DateTimeTextTransformer implements CompilableTypeTransformer
 {
     /**
      * @param mixed $data
@@ -41,5 +44,28 @@ class DateTimeTextTransformer implements TypeTransformer
         }
 
         return [];
+    }
+
+    /**
+     * @param CompilationContext $ctx
+     * @param TypeMetadata $metadata
+     */
+    public function compile(CompilationContext $ctx, TypeMetadata $metadata)
+    {
+        if ( ! $metadata instanceof DateTimeMetadata) {
+            throw new \InvalidArgumentException();
+        }
+
+        $inputData = $ctx->getCurrentFrame()->getInputData();
+        if ( ! $inputData instanceof ExpressionMethodCallable) {
+            $frame = $ctx->getCurrentFrame();
+            $nonCallableInput = $inputData;
+            $inputData = $ctx->createFreeVariable();
+            $frame->addStatement($ctx->stateExpression($ctx->assignVariable($inputData, $nonCallableInput)));
+        }
+
+        $ex = $ctx->callMethod($inputData, "format", [$ctx->constValue($metadata->getFormat())]);
+
+        $ctx->getCurrentFrame()->setResult($ex);
     }
 }

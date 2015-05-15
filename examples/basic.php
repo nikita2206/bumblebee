@@ -163,3 +163,7 @@ $comment2 = new Comment("Meh..", []);
 $post = new BlogPost("You Won't Believe What Scientists Have Found Out", "Lots of stuff, really", new DateTime("2014-05-12"), [$comment1, $comment2]);
 
 print_r($transformer->transform($post, "blog_post"));
+
+$compiler = new \Bumblebee\Compiler($typeProvider, $transformerProvider);
+
+echo $compiler->compile("datetime_iso8601");
