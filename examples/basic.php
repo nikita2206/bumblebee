@@ -9,11 +9,92 @@ use Bumblebee\Metadata\ValidationContext,
     Bumblebee\Metadata\ObjectArrayMetadata,
     Bumblebee\Metadata\ObjectArrayFieldMetadata;
 
+
+/**
+ * Lets say we have these domain classes
+ */
+class BlogPost
+{
+
+    protected $title;
+
+    protected $shortDescription;
+
+    protected $comments;
+
+    protected $postedAt;
+
+    protected $tags;
+
+    public function __construct($title, $shortDesc, DateTime $postedAt, $comments)
+    {
+        $this->title = $title;
+        $this->shortDescription = $shortDesc;
+        $this->postedAt = $postedAt;
+        $this->comments = $comments;
+
+        $this->tags = array_filter(array_unique(explode(" ", $title . " " . $shortDesc)), function ($tag) { return strlen($tag) > 4; });
+        sort($this->tags);
+    }
+
+    public function getTitle()
+    {
+        return $this->title;
+    }
+
+    public function getShortDescription()
+    {
+        return $this->shortDescription;
+    }
+
+    public function getComments()
+    {
+        return $this->comments;
+    }
+
+    public function getPostedAt()
+    {
+        return $this->postedAt;
+    }
+
+    public function getTags()
+    {
+        return $this->tags;
+    }
+
+}
+
+class Comment
+{
+
+    protected $content;
+
+    protected $children;
+
+    public function __construct($content, $children)
+    {
+        $this->content = $content;
+        $this->children = $children;
+    }
+
+    public function getContent()
+    {
+        return $this->content;
+    }
+
+    public function getChildren()
+    {
+        return $this->children;
+    }
+
+}
+
+
 /**
  * This is how you can create your own custom transformers
- * It is later registered in LocatorTransformerProvider under the name 'custom'
+ * It is later registered in LocatorTransformerProvider under the name 'tags_transformer' and used in 'tags' type
  */
-class CustomTransformer implements TypeTransformer
+class TagsTransformer implements TypeTransformer
 {
     public function transform($data, TypeMetadata $metadata, Transformer $transformer)
     {
@@ -28,15 +109,32 @@ class CustomTransformer implements TypeTransformer
 
 /**
  * TypeProvider should implement Bumblebee\TypeProvider interface, it is needed to get type metadata
+ * Here we pass all the metadata needed for transforming our domain objects into arrays that would look like this:
+ * array(
+ *  "title" => ...,
+ *  "short_description" => ...,
+ *  "posted_at" => ...,
+ *  "tags" => ..., (we combine tags with implode())
+ *  "comments" => array(
+ *   array("content" => ..., "children" => array(array("content" => ..., "children" => ...))),
+ *   ...
+ *  )
  */
 $typeProvider = new \Bumblebee\BasicTypeProvider([
-    "first_type" => new ObjectArrayMetadata([
-        new ObjectArrayFieldMetadata(null, "stuff", "getStuff", true),
-        new ObjectArrayFieldMetadata("second_type", "foo", "foo", false),
-        new ObjectArrayFieldMetadata("datetime_iso8601", "created_at", "getDate", true)
+    "blog_post" => new ObjectArrayMetadata([
+        new ObjectArrayFieldMetadata(null, "title", "getTitle", true),
+        new ObjectArrayFieldMetadata(null, "short_description", "getShortDescription", true),
+        new ObjectArrayFieldMetadata("datetime_iso8601", "posted_at", "getPostedAt", true),
+        new ObjectArrayFieldMetadata("comments", "comments", "getComments", true),
+        new ObjectArrayFieldMetadata("tags", "tags", "getTags", true)
     ]),
-    "second_type" => new TypeMetadata("custom"),
-    "datetime_iso8601" => new \Bumblebee\Metadata\DateTimeMetadata(DATE_ISO8601)
+    "comments" => new \Bumblebee\Metadata\TypedCollectionMetadata("comment"),
+    "comment" => new ObjectArrayMetadata([
+        new ObjectArrayFieldMetadata(null, "content", "getContent", true),
+        new ObjectArrayFieldMetadata("comments", "children", "getChildren", true)
+    ]),
+    "tags" => new TypeMetadata("tags_transformer"),
+    "datetime_iso8601" => new \Bumblebee\Metadata\DateTimeMetadata(DATE_ISO8601),
 ]);
 
 /**
@@ -45,8 +143,9 @@ $typeProvider = new \Bumblebee\BasicTypeProvider([
  */
 $transformerProvider = new \Bumblebee\LocatorTransformerProvider([
     "object_array" => 'Bumblebee\TypeTransformer\ObjectArrayTransformer',
-    "custom" => 'CustomTransformer',
-    "datetime_text" => 'Bumblebee\TypeTransformer\DateTimeTextTransformer'
+    "datetime_text" => 'Bumblebee\TypeTransformer\DateTimeTextTransformer',
+    "typed_collection" => 'Bumblebee\TypeTransformer\TypedCollectionTransformer',
+    "tags_transformer" => 'TagsTransformer'
 ]);
 
 $transformer = new Transformer($typeProvider, $transformerProvider);
@@ -57,36 +156,10 @@ $errors = $transformer->validateTypes();
 echo "Errors:", PHP_EOL;
 var_dump($errors);
 
-/**
- * We will use this class to transform it to an array
- */
-class FirstClass
-{
 
-    public $foo;
+$comment1 = new Comment("Wow fascinating!", [new Comment("I know right!", [new Comment("No you don't", [])])]);
+$comment2 = new Comment("Meh..", []);
 
-    public function getStuff()
-    {
-        return md5(mt_rand());
-    }
+$post = new BlogPost("You Won't Believe What Scientists Have Found Out", "Lots of stuff, really", new DateTime("2014-05-12"), [$comment1, $comment2]);
 
-    public function getDate()
-    {
-        return new DateTimeImmutable();
-    }
-
-}
-
-$firstInstance = new FirstClass();
-$firstInstance->foo = ["paper", "rock", "scissors"];
-
-/**
- * In the end you'll get something like
- * array(2) {
- *   'stuff' =>
- *   string(32) "38f5b950bf27ceb8a80309370a86cd9c"
- *   'foo' =>
- *   string(21) "paper, rock, scissors"
- * }
- */
-var_dump($transformer->transform($firstInstance, "first_type"));
+print_r($transformer->transform($post, "blog_post"));
