@@ -12,14 +12,20 @@ class AnonymousFunction implements Expression
     protected $statements;
 
     /**
-     * @var Variable[]
+     * @var FunctionArgument[]
      */
     protected $arguments;
 
-    public function __construct(array $arguments, array $statements)
+    /**
+     * @var FunctionArgument[]
+     */
+    protected $use;
+
+    public function __construct(array $arguments, array $statements, array $use = [])
     {
         $this->arguments = $arguments;
         $this->statements = $statements;
+        $this->use = $use;
     }
 
     public function generate()
@@ -29,14 +35,22 @@ class AnonymousFunction implements Expression
         foreach ($this->arguments as $argument) {
             $args[] = $argument->generate();
         }
-        $code .= implode(",", $args) . ") {\n";
+        $code .= implode(",", $args) . ") ";
+
+        if ($this->use) {
+            $uses = [];
+            foreach ($this->use as $use) {
+                $uses[] = $use->generate();
+            }
+            $code .= "use (" . implode(",", $uses) . ") ";
+        }
 
         $stmts = [];
         foreach ($this->statements as $stmt) {
             $stmts[] = $stmt->generate();
         }
 
-        return $code . implode("\n", $stmts) . "\n}";
+        return $code . "{\n" . implode("\n", $stmts) . "\n}";
     }
 
 }

@@ -3,6 +3,10 @@
 namespace Bumblebee\TypeTransformer;
 
 use Bumblebee\Compilation\CompilationContext;
+use Bumblebee\Compilation\CompilationFrame;
+use Bumblebee\Compilation\ExpressionMethodCallable;
+use Bumblebee\Compilation\Variable;
+use Bumblebee\Compiler;
 use Bumblebee\Metadata\ObjectArrayFieldMetadata;
 use Bumblebee\Metadata\ObjectArrayMetadata;
 use Bumblebee\Metadata\TypeMetadata;
@@ -30,7 +34,7 @@ class ObjectArrayTransformer implements CompilableTypeTransformer
             $fieldValue = $field->isMethod() ? $data->{$field->getInputName()}() : $data->{$field->getInputName()};
 
             if ($field->getType()) {
-                $fieldValue = $transformer->transform($fieldValue, $field->getType(), $transformer);
+                $fieldValue = $transformer->transform($fieldValue, $field->getType());
             }
 
             $output[$field->getName()] = $fieldValue;
@@ -77,17 +81,43 @@ class ObjectArrayTransformer implements CompilableTypeTransformer
     /**
      * @param CompilationContext $ctx
      * @param TypeMetadata $metadata
+     * @param Compiler $compiler
      * @return void
      */
-    public function compile(CompilationContext $ctx, TypeMetadata $metadata)
+    public function compile(CompilationContext $ctx, TypeMetadata $metadata, Compiler $compiler)
     {
         if ( ! $metadata instanceof ObjectArrayMetadata) {
             throw new \InvalidArgumentException();
         }
 
-        foreach ($metadata->getFields() as $field) {
-            $field->
+        $frame = $ctx->getCurrentFrame();
+        $input = $frame->getInputData();
+
+        if ( ! $input instanceof ExpressionMethodCallable || ( ! $input instanceof Variable && count($metadata->getFields()) > 4)) {
+            $inputVar = $ctx->createFreeVariable();
+            $frame->addStatement($ctx->assignVariableStmt($inputVar, $input));
+            $input = $inputVar;
         }
+
+        $outputArray = $ctx->arrayConstructor();
+        foreach ($metadata->getFields() as $field) {
+            $fieldValue = $field->isMethod() ? $ctx->callMethod($input, $field->getInputName(), []) : $ctx->fetchProperty($input, $field->getInputName());
+
+            if ($field->getType()) {
+                $ctx->pushFrame(new CompilationFrame($fieldValue, $field->getType()));
+                $compiler->_compileType($ctx, $field->getType());
+                $fieldFrame = $ctx->popFrame();
+
+                foreach ($fieldFrame->getStatements() as $stmt) {
+                    $frame->addStatement($stmt);
+                }
+                $fieldValue = $fieldFrame->getResult();
+            }
+
+            $outputArray->add($field->getName(), $fieldValue);
+        }
+
+        $frame->setResult($outputArray);
     }
 
 }

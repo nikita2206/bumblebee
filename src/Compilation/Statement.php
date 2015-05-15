@@ -3,12 +3,12 @@
 namespace Bumblebee\Compilation;
 
 
-abstract class Statement
+interface Statement
 {
 
     /**
      * @return string
      */
-    public abstract function generate();
+    public function generate();
 
 }

@@ -2,7 +2,7 @@
 
 namespace Bumblebee\Compilation;
 
-class MethodCall implements Expression
+class MethodCall implements Expression, ExpressionMethodCallable, ExpressionDimable
 {
 
     /**

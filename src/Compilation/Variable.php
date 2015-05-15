@@ -2,7 +2,8 @@
 
 namespace Bumblebee\Compilation;
 
-class Variable implements Expression, ExpressionMethodCallable, AssignableExpression
+class Variable
+    implements Expression, ExpressionMethodCallable, AssignableExpression, ExpressionCallable, ClassNameConstructable, ExpressionDimable
 {
 
     protected $name;
@@ -10,6 +11,14 @@ class Variable implements Expression, ExpressionMethodCallable, AssignableExpres
     public function __construct($name)
     {
         $this->name = $name;
+    }
+
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
     }
 
     public function generate()

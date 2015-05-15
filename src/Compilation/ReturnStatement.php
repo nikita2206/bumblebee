@@ -2,8 +2,7 @@
 
 namespace Bumblebee\Compilation;
 
-
-class ReturnStatement extends Statement
+class ReturnStatement implements Statement
 {
 
     /**

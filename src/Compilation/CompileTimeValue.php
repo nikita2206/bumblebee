@@ -2,7 +2,8 @@
 
 namespace Bumblebee\Compilation;
 
-class ConstValue implements Expression, ExpressionMethodCallable, ExpressionCallable, ClassNameConstructable
+
+class CompileTimeValue implements Expression
 {
 
     protected $value;
@@ -14,7 +15,7 @@ class ConstValue implements Expression, ExpressionMethodCallable, ExpressionCall
 
     public function generate()
     {
-        return $this->value;
+        return var_export($this->value, true);
     }
 
 }

@@ -166,4 +166,8 @@ print_r($transformer->transform($post, "blog_post"));
 
 $compiler = new \Bumblebee\Compiler($typeProvider, $transformerProvider);
 
-echo $compiler->compile("datetime_iso8601");
+echo $code = $compiler->compile("blog_post");
+
+$code = "return {$code};";
+$generatedTransformer = eval($code);
+print_r($generatedTransformer($post, $transformer));

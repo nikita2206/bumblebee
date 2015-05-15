@@ -3,13 +3,17 @@
 namespace Bumblebee\TypeTransformer;
 
 
+use Bumblebee\Compilation\CompilationContext;
+use Bumblebee\Compilation\CompilationFrame;
+use Bumblebee\Compilation\FunctionArgument;
+use Bumblebee\Compiler;
 use Bumblebee\Metadata\TypedCollectionMetadata;
 use Bumblebee\Metadata\TypeMetadata;
 use Bumblebee\Metadata\ValidationContext;
 use Bumblebee\Metadata\ValidationError;
 use Bumblebee\Transformer;
 
-class TypedCollectionTransformer implements TypeTransformer
+class TypedCollectionTransformer implements CompilableTypeTransformer
 {
     /**
      * @param mixed $data
@@ -60,4 +64,51 @@ class TypedCollectionTransformer implements TypeTransformer
 
         return [];
     }
+
+    /**
+     * @param CompilationContext $ctx
+     * @param TypeMetadata $metadata
+     * @param Compiler $compiler
+     */
+    public function compile(CompilationContext $ctx, TypeMetadata $metadata, Compiler $compiler)
+    {
+        if ( ! $metadata instanceof TypedCollectionMetadata) {
+            throw new \InvalidArgumentException();
+        }
+
+        $frame = $ctx->getCurrentFrame();
+        $colVar = $ctx->createFreeVariable("col");
+        if ($metadata->shouldTransformIntoArray()) {
+            $colVal = $ctx->arrayConstructor();
+        } else {
+            $colVal = $ctx->constructObject($ctx->constValue($metadata->getCollectionClassName()));
+        }
+        $frame->addStatement($ctx->assignVariableStmt($colVar, $colVal));
+
+        $keyVar = null;
+        if ($metadata->shouldPreserveKeys()) {
+            $keyVar = $ctx->createFreeVariable();
+        }
+        $valVar = $ctx->createFreeVariable();
+
+        $foreach = $ctx->foreachStmt($frame->getInputData(),
+            new FunctionArgument($valVar->getName()), $keyVar ? new FunctionArgument($keyVar->getName()) : null);
+
+        if ($metadata->getChildrenType()) {
+            $ctx->pushFrame(new CompilationFrame($valVar, $metadata->getChildrenType()));
+            $compiler->_compileType($ctx, $metadata->getChildrenType());
+            $childFrame = $ctx->popFrame();
+            $valVar = $childFrame->getResult();
+
+            foreach ($childFrame->getStatements() as $stmt) {
+                $foreach->addStatement($stmt);
+            }
+        }
+
+        $foreach->addStatement($ctx->assignVariableStmt($ctx->fetchDim($colVar, $keyVar), $valVar));
+
+        $frame->addStatement($foreach);
+        $frame->setResult($colVar);
+    }
+
 }

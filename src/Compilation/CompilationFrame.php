@@ -20,10 +20,24 @@ class CompilationFrame
      */
     protected $inputData;
 
-    public function __construct(Expression $inputData)
+    /**
+     * @var string
+     */
+    protected $type;
+
+    public function __construct(Expression $inputData, $type)
     {
         $this->statements = [];
         $this->inputData = $inputData;
+        $this->type = $type;
+    }
+
+    /**
+     * @return string
+     */
+    public function getType()
+    {
+        return $this->type;
     }
 
     /**

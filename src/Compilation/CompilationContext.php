@@ -5,8 +5,6 @@ namespace Bumblebee\Compilation;
 class CompilationContext
 {
 
-    protected $returnExpression;
-
     /**
      * @var Variable
      */
@@ -27,6 +25,11 @@ class CompilationContext
      */
     protected $varNameCounter;
 
+    /**
+     * @var Variable[] Keys are types, values are variables with transformers
+     */
+    protected $recursiveTransformers;
+
 
     public function __construct(Variable $inputVariable, Variable $transformerVariable)
     {
@@ -34,6 +37,7 @@ class CompilationContext
         $this->transformerVariable = $transformerVariable;
         $this->frameStack = new \SplStack();
         $this->varNameCounter = 0;
+        $this->recursiveTransformers = [];
     }
 
     /**
@@ -70,12 +74,76 @@ class CompilationContext
     }
 
     /**
+     * @return bool
+     */
+    public function isCurrentFrameInRecursion()
+    {
+        /** @var CompilationFrame $top */
+        $top = $this->frameStack->pop();
+        $isIt = false;
+
+        foreach ($this->frameStack as $frame) {
+            if ($frame->getType() === $top->getType()) {
+                $isIt = true;
+                break;
+            }
+        }
+        $this->frameStack->push($top);
+
+        return $isIt;
+    }
+
+    /**
+     * @param string $type
+     * @param Variable $funcName
+     */
+    public function addRecursiveTransformer($type, Variable $funcName)
+    {
+        $this->recursiveTransformers[$type] = $funcName;
+    }
+
+    /**
+     * @param string $type
+     * @return Variable|null
+     */
+    public function getRecursiveTransformer($type)
+    {
+        return isset($this->recursiveTransformers[$type]) ? $this->recursiveTransformers[$type] : null;
+    }
+
+    /**
+     * @return Variable[]
+     */
+    public function getRecursiveTransformers()
+    {
+        return $this->recursiveTransformers;
+    }
+
+    /**
+     * @param Variable[] $transformers
+     */
+    public function setRecursiveTransformers(array $transformers)
+    {
+        $this->recursiveTransformers = $transformers;
+    }
+
+    /**
      * @param Expression $expression
      * @return ExpressionStatement
      */
     public function stateExpression(Expression $expression)
     {
         return new ExpressionStatement($expression);
+    }
+
+    /**
+     * @param ExpressionMethodCallable $object
+     * @param string $propertyName
+     * @return FetchProperty
+     */
+    public function fetchProperty(ExpressionMethodCallable $object, $propertyName)
+    {
+        return new FetchProperty($object, $propertyName);
     }
 
     /**
@@ -86,6 +154,44 @@ class CompilationContext
     public function assignVariable(AssignableExpression $var, Expression $expression)
     {
         return new AssignVariable($var, $expression);
+    }
+
+    /**
+     * @param AssignableExpression $var
+     * @param Expression $expression
+     * @return ExpressionStatement
+     */
+    public function assignVariableStmt(AssignableExpression $var, Expression $expression)
+    {
+        return new ExpressionStatement($this->assignVariable($var, $expression));
+    }
+
+    /**
+     * @param AssignableExpression $var
+     * @return UnsetVariable
+     */
+    public function unsetVariable(AssignableExpression $var)
+    {
+        return new UnsetVariable([$var]);
+    }
+
+    /**
+     * @return ArrayConstructor
+     */
+    public function arrayConstructor()
+    {
+        return new ArrayConstructor();
+    }
+
+    /**
+     * @param Expression $traversable
+     * @param FunctionArgument $valueVar
+     * @param FunctionArgument $keyVar
+     * @return ForeachStmt
+     */
+    public function foreachStmt(Expression $traversable, FunctionArgument $valueVar, FunctionArgument $keyVar = null)
+    {
+        return new ForeachStmt($traversable, $valueVar, $keyVar);
     }
 
     /**
@@ -100,16 +206,55 @@ class CompilationContext
     }
 
     /**
-     * @param array|string|float|int|bool $value
-     * @return ConstValue
+     * @param ExpressionMethodCallable $function
+     * @param Expression[] $args
+     * @return FunctionCall
      */
-    public function constValue($value)
+    public function callFunction(ExpressionMethodCallable $function, array $args = [])
+    {
+        return new FunctionCall($function, $args);
+    }
+
+    /**
+     * @param array|string|float|int|bool $value
+     * @return CompileTimeValue
+     */
+    public function compileTimeValue($value)
     {
         if (is_resource($value) || is_object($value)) {
             throw new \InvalidArgumentException("Can't create constant from object or resource");
         }
 
+        return new CompileTimeValue($value);
+    }
+
+    /**
+     * @param ExpressionDimable $var
+     * @param Expression $dim
+     * @return FetchDim
+     */
+    public function fetchDim(ExpressionDimable $var, Expression $dim = null)
+    {
+        return new FetchDim($var, $dim);
+    }
+
+    /**
+     * @param string $value
+     * @return ConstValue
+     */
+    public function constValue($value)
+    {
         return new ConstValue($value);
+    }
+
+    /**
+     * @param ClassNameConstructable $className
+     * @param Expression[] $args
+     * @return ConstructObject
+     */
+    public function constructObject(ClassNameConstructable $className, array $args = [])
+    {
+        return new ConstructObject($className, $args);
     }
 
     /**
@@ -124,11 +269,12 @@ class CompilationContext
     /**
      * @param Variable[] $arguments
      * @param Statement[] $statements
+     * @param Variable[] $use
      * @return AnonymousFunction
      */
-    public function anonymousFunction(array $arguments, array $statements)
+    public function anonymousFunction(array $arguments, array $statements, array $use = [])
     {
-        return new AnonymousFunction($arguments, $statements);
+        return new AnonymousFunction($arguments, $statements, $use);
     }
 
     public function getInputVariable()
@@ -147,7 +293,10 @@ class CompilationContext
      */
     public function generateCallback(array $statements)
     {
-        return $this->anonymousFunction([$this->inputVariable, $this->transformerVariable], $statements)->generate();
+        return $this->anonymousFunction([
+            new FunctionArgument($this->inputVariable->getName()),
+            new FunctionArgument($this->transformerVariable->getName())
+        ], $statements)->generate();
     }
 
 }

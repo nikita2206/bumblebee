@@ -4,6 +4,7 @@ namespace Bumblebee;
 
 use Bumblebee\Compilation\CompilationContext;
 use Bumblebee\Compilation\CompilationFrame;
+use Bumblebee\Compilation\FunctionArgument;
 use Bumblebee\Compilation\Variable;
 use Bumblebee\TypeTransformer\CompilableTypeTransformer;
 
@@ -33,25 +34,60 @@ class Compiler
     public function compile($type)
     {
         $ctx = new CompilationContext(new Variable("input"), new Variable("transformer"));
+        $ctx->pushFrame($frame = new CompilationFrame($ctx->getInputVariable(), $type));
 
+        $this->_compileType($ctx, $type);
+
+        $stmts = $frame->getStatements();
+        $stmts[] = $ctx->returnStatement($frame->getResult());
+
+        return $ctx->generateCallback($stmts);
+    }
+
+    /**
+     * Acts on a $ctx->currentFrame, doesn't return anything
+     *
+     * @param CompilationContext $ctx
+     * @param string $type
+     */
+    public function _compileType(CompilationContext $ctx, $type)
+    {
+        $frame = $ctx->getCurrentFrame();
         $metadata = $this->types->get($type);
         $transformer = $this->transformers->get($metadata->getTransformer());
 
         if ( ! $transformer instanceof CompilableTypeTransformer) {
-            // fallback to just call a Transformer#transform() method is the current transformer is not compilable
-            $methodCall = $ctx->callMethod($ctx->getTransformerVariable(), "transform", [$ctx->getInputVariable(), $ctx->constValue($type)]);
-            return $ctx->generateCallback([$ctx->returnStatement($methodCall)]);
+            $frame->setResult($ctx->callMethod($ctx->getTransformerVariable(), "transform", [$frame->getInputData(), $ctx->compileTimeValue($type)]));
+            return;
         }
 
-        $rootFrame = new CompilationFrame($ctx->getInputVariable());
-        $ctx->pushFrame($rootFrame);
+        if ($ctx->isCurrentFrameInRecursion()) {
+            if ( ! $recursiveTransformer = $ctx->getRecursiveTransformer($type)) {
+                $recursiveTransformer = $ctx->createFreeVariable("{$type}_trans");
+                $innerCtx = new CompilationContext(new Variable("input"), new Variable("transformer"));
+                $ctx->addRecursiveTransformer($type, $recursiveTransformer);
+                $innerCtx->setRecursiveTransformers($ctx->getRecursiveTransformers());
+                $innerCtx->pushFrame($innerFrame = new CompilationFrame($innerCtx->getInputVariable(), $type));
 
-        $transformer->compile($ctx, $metadata);
+                $transformer->compile($innerCtx, $metadata, $this);
+                $stmts = $innerFrame->getStatements();
+                $stmts[] = $innerCtx->returnStatement($innerFrame->getResult());
 
-        $stmts = $rootFrame->getStatements();
-        $stmts[] = $ctx->returnStatement($rootFrame->getResult());
+                $functionUses = [new FunctionArgument("transformer"), new FunctionArgument($recursiveTransformer->getName(), true)];
+                foreach ($ctx->getRecursiveTransformers() as $trans) {
+                    if ($trans->getName() !== $recursiveTransformer->getName()) {
+                        $functionUses[] = new FunctionArgument($trans->getName());
+                    }
+                }
+                $function = $innerCtx->anonymousFunction([new FunctionArgument("input")], $stmts, $functionUses);
 
-        return $ctx->generateCallback($stmts);
+                $frame->addStatement($ctx->assignVariableStmt($recursiveTransformer, $function));
+            }
+
+            $frame->setResult($ctx->callFunction($recursiveTransformer, [$frame->getInputData()]));
+        } else {
+            $transformer->compile($ctx, $metadata, $this);
+        }
     }
 
 }

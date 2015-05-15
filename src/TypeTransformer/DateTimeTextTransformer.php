@@ -5,6 +5,7 @@ namespace Bumblebee\TypeTransformer;
 use Bumblebee\Compilation\CompilationContext;
 use Bumblebee\Compilation\ExpressionMethodCallable;
 use Bumblebee\Compilation\Variable;
+use Bumblebee\Compiler;
 use Bumblebee\Metadata\DateTimeMetadata;
 use Bumblebee\Metadata\TypeMetadata;
 use Bumblebee\Metadata\ValidationContext;
@@ -49,8 +50,9 @@ class DateTimeTextTransformer implements CompilableTypeTransformer
     /**
      * @param CompilationContext $ctx
      * @param TypeMetadata $metadata
+     * @param Compiler $compiler
      */
-    public function compile(CompilationContext $ctx, TypeMetadata $metadata)
+    public function compile(CompilationContext $ctx, TypeMetadata $metadata, Compiler $compiler)
     {
         if ( ! $metadata instanceof DateTimeMetadata) {
             throw new \InvalidArgumentException();
@@ -61,11 +63,15 @@ class DateTimeTextTransformer implements CompilableTypeTransformer
             $frame = $ctx->getCurrentFrame();
             $nonCallableInput = $inputData;
             $inputData = $ctx->createFreeVariable();
-            $frame->addStatement($ctx->stateExpression($ctx->assignVariable($inputData, $nonCallableInput)));
+            $result = $ctx->createFreeVariable();
+            $frame->addStatement($ctx->assignVariableStmt($inputData, $nonCallableInput));
+            $frame->addStatement($ctx->assignVariableStmt($result,
+                $ctx->callMethod($inputData, "format", [$ctx->compileTimeValue($metadata->getFormat())])));
+            $frame->addStatement($ctx->unsetVariable($inputData));
+        } else {
+            $result = $ctx->callMethod($inputData, "format", [$ctx->compileTimeValue($metadata->getFormat())]);
         }
 
-        $ex = $ctx->callMethod($inputData, "format", [$ctx->constValue($metadata->getFormat())]);
-
-        $ctx->getCurrentFrame()->setResult($ex);
+        $ctx->getCurrentFrame()->setResult($result);
     }
 }

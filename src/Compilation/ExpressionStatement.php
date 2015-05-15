@@ -2,7 +2,7 @@
 
 namespace Bumblebee\Compilation;
 
-class ExpressionStatement extends Statement
+class ExpressionStatement implements Statement
 {
 
     /**
