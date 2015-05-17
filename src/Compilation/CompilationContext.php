@@ -103,6 +103,17 @@ class CompilationContext
     }
 
     /**
+     * @param Variable $funcName
+     * @param AnonymousFunction $function
+     */
+    public function declareRecursiveTransformer(Variable $funcName, AnonymousFunction $function)
+    {
+        /** @var CompilationFrame $frame */
+        $frame = $this->frameStack->bottom();
+        $frame->addStatement($this->assignVariable($funcName, $function));
+    }
+
+    /**
      * @param string $type
      * @return Variable|null
      */
@@ -147,30 +158,41 @@ class CompilationContext
     }
 
     /**
-     * @param AssignableExpression $var
+     * @param ExpressionAssignable $var
      * @param Expression $expression
      * @return AssignVariable
      */
-    public function assignVariable(AssignableExpression $var, Expression $expression)
+    public function assignVariable(ExpressionAssignable $var, Expression $expression)
     {
         return new AssignVariable($var, $expression);
     }
 
     /**
-     * @param AssignableExpression $var
+     * @param ExpressionAssignable $var
      * @param Expression $expression
      * @return ExpressionStatement
      */
-    public function assignVariableStmt(AssignableExpression $var, Expression $expression)
+    public function assignVariableStmt(ExpressionAssignable $var, Expression $expression)
     {
         return new ExpressionStatement($this->assignVariable($var, $expression));
     }
 
     /**
-     * @param AssignableExpression $var
+     * @param Expression $condition
+     * @param Statement[] $success
+     * @param Statement[] $failure
+     * @return IfStmt
+     */
+    public function ifStmt(Expression $condition, array $success, array $failure = [])
+    {
+        return new IfStmt($condition, $success, $failure);
+    }
+
+    /**
+     * @param ExpressionAssignable $var
      * @return UnsetVariable
      */
-    public function unsetVariable(AssignableExpression $var)
+    public function unsetVariable(ExpressionAssignable $var)
     {
         return new UnsetVariable([$var]);
     }
@@ -236,6 +258,17 @@ class CompilationContext
     public function fetchDim(ExpressionDimable $var, Expression $dim = null)
     {
         return new FetchDim($var, $dim);
+    }
+
+    /**
+     * @param Expression $condition
+     * @param Expression $success
+     * @param Expression $failure
+     * @return TernaryExpression
+     */
+    public function ternary(Expression $condition, Expression $success, Expression $failure)
+    {
+        return new TernaryExpression($condition, $success, $failure);
     }
 
     /**

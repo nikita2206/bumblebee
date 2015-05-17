@@ -57,10 +57,16 @@ class CompilationFrame
     }
 
     /**
-     * @param Statement $stmt
+     * @param Statement|Expression $stmt
      */
-    public function addStatement(Statement $stmt)
+    public function addStatement($stmt)
     {
+        if ($stmt instanceof Expression) {
+            $stmt = new ExpressionStatement($stmt);
+        } elseif ( ! $stmt instanceof Statement) {
+            throw new \InvalidArgumentException("CompilationFrame#addStatement only accepts instances of Statement or Expression");
+        }
+
         $this->statements[] = $stmt;
     }
 

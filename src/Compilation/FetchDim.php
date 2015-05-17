@@ -4,7 +4,7 @@ namespace Bumblebee\Compilation;
 
 
 class FetchDim
-    implements Expression, ExpressionMethodCallable, ExpressionCallable, AssignableExpression, ClassNameConstructable, ExpressionDimable
+    implements Expression, ExpressionMethodCallable, ExpressionCallable, ExpressionAssignable, ClassNameConstructable, ExpressionDimable
 {
 
     /**

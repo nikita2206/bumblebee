@@ -26,7 +26,7 @@ class BlogPost
 
     protected $tags;
 
-    public function __construct($title, $shortDesc, DateTime $postedAt, $comments)
+    public function __construct($title, $shortDesc, DateTime $postedAt, $comments = [])
     {
         $this->title = $title;
         $this->shortDescription = $shortDesc;
@@ -50,6 +50,11 @@ class BlogPost
     public function getComments()
     {
         return $this->comments;
+    }
+
+    public function setComments($comments)
+    {
+        $this->comments = $comments;
     }
 
     public function getPostedAt()
@@ -134,7 +139,7 @@ $typeProvider = new \Bumblebee\BasicTypeProvider([
         new ObjectArrayFieldMetadata("comments", "children", "getChildren", true)
     ]),
     "tags" => new TypeMetadata("tags_transformer"),
-    "datetime_iso8601" => new \Bumblebee\Metadata\DateTimeMetadata(DATE_ISO8601),
+    "datetime_iso8601" => new \Bumblebee\Metadata\DateTimeMetadata(DATE_ISO8601)
 ]);
 
 /**
@@ -150,24 +155,11 @@ $transformerProvider = new \Bumblebee\LocatorTransformerProvider([
 
 $transformer = new Transformer($typeProvider, $transformerProvider);
 
-
-$errors = $transformer->validateTypes();
-
-echo "Errors:", PHP_EOL;
-var_dump($errors);
-
-
 $comment1 = new Comment("Wow fascinating!", [new Comment("I know right!", [new Comment("No you don't", [])])]);
 $comment2 = new Comment("Meh..", []);
 
 $post = new BlogPost("You Won't Believe What Scientists Have Found Out", "Lots of stuff, really", new DateTime("2014-05-12"), [$comment1, $comment2]);
 
-print_r($transformer->transform($post, "blog_post"));
+$postArray = $transformer->transform($post, "blog_post");
 
-$compiler = new \Bumblebee\Compiler($typeProvider, $transformerProvider);
-
-echo $code = $compiler->compile("blog_post");
-
-$code = "return {$code};";
-$generatedTransformer = eval($code);
-print_r($generatedTransformer($post, $transformer));
+var_dump($postArray);

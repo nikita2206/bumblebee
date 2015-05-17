@@ -3,7 +3,7 @@
 namespace Bumblebee\Compilation;
 
 class FetchProperty
-    implements Expression, ExpressionMethodCallable, AssignableExpression, ClassNameConstructable, ExpressionDimable
+    implements Expression, ExpressionMethodCallable, ExpressionAssignable, ClassNameConstructable, ExpressionDimable
 {
 
     /**

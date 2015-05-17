@@ -95,7 +95,7 @@ class ObjectArrayTransformer implements CompilableTypeTransformer
 
         if ( ! $input instanceof ExpressionMethodCallable || ( ! $input instanceof Variable && count($metadata->getFields()) > 4)) {
             $inputVar = $ctx->createFreeVariable();
-            $frame->addStatement($ctx->assignVariableStmt($inputVar, $input));
+            $frame->addStatement($ctx->assignVariable($inputVar, $input));
             $input = $inputVar;
         }
 

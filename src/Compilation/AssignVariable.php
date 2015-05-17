@@ -6,7 +6,7 @@ class AssignVariable implements Expression
 {
 
     /**
-     * @var AssignableExpression
+     * @var ExpressionAssignable
      */
     protected $var;
 
@@ -15,7 +15,7 @@ class AssignVariable implements Expression
      */
     protected $expression;
 
-    public function __construct(AssignableExpression $var, Expression $expression)
+    public function __construct(ExpressionAssignable $var, Expression $expression)
     {
         $this->var = $var;
         $this->expression = $expression;

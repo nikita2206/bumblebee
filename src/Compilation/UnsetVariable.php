@@ -6,12 +6,12 @@ class UnsetVariable implements Statement
 {
 
     /**
-     * @var AssignableExpression[]
+     * @var ExpressionAssignable[]
      */
     protected $vars;
 
     /**
-     * @param AssignableExpression[] $vars
+     * @param ExpressionAssignable[] $vars
      */
     public function __construct($vars)
     {

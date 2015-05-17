@@ -64,8 +64,8 @@ class DateTimeTextTransformer implements CompilableTypeTransformer
             $nonCallableInput = $inputData;
             $inputData = $ctx->createFreeVariable();
             $result = $ctx->createFreeVariable();
-            $frame->addStatement($ctx->assignVariableStmt($inputData, $nonCallableInput));
-            $frame->addStatement($ctx->assignVariableStmt($result,
+            $frame->addStatement($ctx->assignVariable($inputData, $nonCallableInput));
+            $frame->addStatement($ctx->assignVariable($result,
                 $ctx->callMethod($inputData, "format", [$ctx->compileTimeValue($metadata->getFormat())])));
             $frame->addStatement($ctx->unsetVariable($inputData));
         } else {

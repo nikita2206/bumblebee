@@ -2,13 +2,15 @@
 
 namespace Bumblebee\TypeTransformer;
 
+use Bumblebee\Compilation\CompilationContext;
+use Bumblebee\Compiler;
 use Bumblebee\Metadata\NumberFormatMetadata;
 use Bumblebee\Metadata\TypeMetadata;
 use Bumblebee\Metadata\ValidationContext;
 use Bumblebee\Metadata\ValidationError;
 use Bumblebee\Transformer;
 
-class NumberFormatTransformer implements TypeTransformer
+class NumberFormatTransformer implements CompilableTypeTransformer
 {
     /**
      * @param mixed $data
@@ -37,5 +39,24 @@ class NumberFormatTransformer implements TypeTransformer
         }
 
         return [];
+    }
+
+    /**
+     * @param CompilationContext $ctx
+     * @param TypeMetadata $metadata
+     * @param Compiler $compiler
+     */
+    public function compile(CompilationContext $ctx, TypeMetadata $metadata, Compiler $compiler)
+    {
+        if ( ! $metadata instanceof NumberFormatMetadata) {
+            throw new \InvalidArgumentException();
+        }
+
+        $ctx->getCurrentFrame()->setResult($ctx->callFunction($ctx->constValue("number_format"), [
+            $ctx->getCurrentFrame()->getInputData(),
+            $ctx->compileTimeValue($metadata->getDecimals()),
+            $ctx->compileTimeValue($metadata->getDecPoint()),
+            $ctx->compileTimeValue($metadata->getThousandsSep())
+        ]));
     }
 }

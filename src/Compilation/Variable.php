@@ -3,7 +3,7 @@
 namespace Bumblebee\Compilation;
 
 class Variable
-    implements Expression, ExpressionMethodCallable, AssignableExpression, ExpressionCallable, ClassNameConstructable, ExpressionDimable
+    implements Expression, ExpressionMethodCallable, ExpressionAssignable, ExpressionCallable, ClassNameConstructable, ExpressionDimable
 {
 
     protected $name;

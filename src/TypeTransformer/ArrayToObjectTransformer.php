@@ -1,0 +1,219 @@
+<?php
+
+namespace Bumblebee\TypeTransformer;
+
+use Bumblebee\Compilation\CompilationContext;
+use Bumblebee\Compilation\CompilationFrame;
+use Bumblebee\Compilation\Expression;
+use Bumblebee\Compilation\ExpressionDimable;
+use Bumblebee\Compiler;
+use Bumblebee\Metadata\ArrayToObjectArgumentMetadata;
+use Bumblebee\Metadata\ArrayToObjectMetadata;
+use Bumblebee\Metadata\TypeMetadata;
+use Bumblebee\Metadata\ValidationContext;
+use Bumblebee\Metadata\ValidationError;
+use Bumblebee\Transformer;
+
+class ArrayToObjectTransformer implements CompilableTypeTransformer
+{
+    /**
+     * @param mixed $data
+     * @param TypeMetadata $metadata
+     * @param Transformer $transformer
+     * @return mixed
+     */
+    public function transform($data, TypeMetadata $metadata, Transformer $transformer)
+    {
+        if ( ! $metadata instanceof ArrayToObjectMetadata) {
+            throw new \InvalidArgumentException();
+        }
+
+        if ( ! is_array($data) && ! $data instanceof \ArrayAccess) {
+            throw new \RuntimeException();
+        }
+
+        $className = $metadata->getClassName();
+
+        if ($metadata->getConstructorArguments()) {
+            $reflection = new \ReflectionClass($className);
+            $object = $reflection->newInstanceArgs($this->fetchArguments($data, $metadata->getConstructorArguments(), $transformer));
+        } else {
+            $object = new $className();
+        }
+
+        foreach ($metadata->getSettingMetadata() as $setting) {
+            if ($setting->isMethod()) {
+                call_user_func_array([$object, $setting->getName()], $this->fetchArguments($data, $setting->getArguments(), $transformer));
+            } else {
+                $object->{$setting->getName()} = reset($this->fetchArguments($data, $setting->getArguments(), $transformer));
+            }
+        }
+
+        return $object;
+    }
+
+    /**
+     * @param array|\ArrayAccess $data
+     * @param ArrayToObjectArgumentMetadata[] $argsMetadata
+     * @param Transformer $transformer
+     * @return array
+     */
+    protected function fetchArguments($data, $argsMetadata, Transformer $transformer)
+    {
+        $args = [];
+
+        foreach ($argsMetadata as $arg) {
+            if ($arg->isKeyAlwaysSet()) {
+                $argVal = $data[$arg->getArrayKey()];
+            } else {
+                $argVal = isset($data[$arg->getArrayKey()]) ? $data[$arg->getArrayKey()] : $arg->getFallbackData();
+            }
+
+            if ($arg->getType()) {
+                $argVal = $transformer->transform($argVal, $arg->getType());
+            }
+
+            $args[] = $argVal;
+        }
+
+        return $args;
+    }
+
+    /**
+     * @param ValidationContext $context
+     * @param TypeMetadata $metadata
+     * @return ValidationError[]
+     */
+    public function validateMetadata(ValidationContext $context, TypeMetadata $metadata)
+    {
+        if ( ! $metadata instanceof ArrayToObjectMetadata) {
+            return [new ValidationError(sprintf("%s expects instance of ArrayToObjectMetadata, %s given", __CLASS__, get_class($metadata)))];
+        }
+
+        $errors = $this->validateArgs("__construct", $metadata->getConstructorArguments(), $context);
+
+        foreach ($metadata->getSettingMetadata() as $idx => $setting) {
+            $errors = array_merge($errors, $this->validateArgs($setting->getName(), $setting->getArguments(), $context));
+
+            if ( ! $setting->isMethod() && count($setting->getArguments()) > 1) {
+                $errors[] = new ValidationError(sprintf("Property assigning expects only one argument, %d given for property %s",
+                    count($setting->getArguments()), $setting->getName()));
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * @param string $methodName
+     * @param ArrayToObjectArgumentMetadata[] $argsMetadata
+     * @param ValidationContext $context
+     * @return ValidationError[]
+     */
+    protected function validateArgs($methodName, $argsMetadata, ValidationContext $context)
+    {
+        $errors = [];
+
+        foreach ($argsMetadata as $idx => $arg) {
+            if ($arg->getType()) {
+                $context->validateLater($arg->getType(), "{$context->getCurrentlyValidatingType()} -> {$methodName} -> Arg#{$idx}");
+            }
+
+            if (is_resource($arg->getFallbackData()) || is_object($arg->getFallbackData())) {
+                $errors[] = new ValidationError("Constructor argument#{$idx} (arrayKey={$arg->getArrayKey()}) can't have fallback of type resource or object");
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Compiles transformer for a given metadata
+     *
+     * @param CompilationContext $ctx
+     * @param TypeMetadata $metadata
+     * @param Compiler $compiler
+     * @return void
+     */
+    public function compile(CompilationContext $ctx, TypeMetadata $metadata, Compiler $compiler)
+    {
+        if ( ! $metadata instanceof ArrayToObjectMetadata) {
+            throw new \InvalidArgumentException();
+        }
+
+        $frame = $ctx->getCurrentFrame();
+
+        if ( ! ($dimable = $frame->getInputData()) instanceof ExpressionDimable) {
+            $nonDimable = $dimable;
+            $dimable    = $ctx->createFreeVariable();
+            $frame->addStatement($ctx->assignVariable($dimable, $nonDimable));
+        }
+
+        $args = $this->compileArguments($dimable, $metadata->getConstructorArguments(), $ctx, $compiler);
+        $objectVal = $ctx->constructObject($ctx->constValue($metadata->getClassName()), $args);
+
+        if ($metadata->getSettingMetadata()) {
+            $objectVar = $ctx->createFreeVariable();
+            $frame->addStatement($ctx->assignVariable($objectVar, $objectVal));
+
+            foreach ($metadata->getSettingMetadata() as $setting) {
+                $args = $this->compileArguments($dimable, $setting->getArguments(), $ctx, $compiler);
+
+                if ($setting->isMethod()) {
+                    $frame->addStatement($ctx->callMethod($objectVar, $setting->getName(), $args));
+                } else {
+                    $frame->addStatement($ctx->assignVariable($ctx->fetchProperty($objectVar, $setting->getName()), $args[0]));
+                }
+            }
+
+            $frame->setResult($objectVar);
+        } else {
+            $frame->setResult($objectVal);
+        }
+    }
+
+    /**
+     * @param ExpressionDimable $input
+     * @param ArrayToObjectArgumentMetadata[] $argsMetadata
+     * @param CompilationContext $ctx
+     * @param Compiler $compiler
+     * @return Expression[]
+     */
+    protected function compileArguments(ExpressionDimable $input, $argsMetadata, CompilationContext $ctx, Compiler $compiler)
+    {
+        $frame = $ctx->getCurrentFrame();
+        $args = [];
+        foreach ($argsMetadata as $arg) {
+            $fetchExp = $ctx->fetchDim($input, $ctx->compileTimeValue($arg->getArrayKey()));
+
+            if ($arg->getType()) {
+                $ctx->pushFrame(new CompilationFrame($fetchExp, $arg->getType()));
+                $compiler->_compileType($ctx, $arg->getType());
+                $argFrame = $ctx->popFrame();
+
+                if ($argFrame->getStatements() && ! $arg->isKeyAlwaysSet()) {
+                    $frame->addStatement($ctx->ifStmt($ctx->callFunction($ctx->constValue("isset"), [$fetchExp]), $argFrame->getStatements()));
+                } else {
+                    foreach ($argFrame->getStatements() as $stmt) {
+                        $frame->addStatement($stmt);
+                    }
+                }
+
+                $argVal = $argFrame->getResult();
+            } else {
+                $argVal = $fetchExp;
+            }
+
+            if ( ! $arg->isKeyAlwaysSet()) {
+                // wrap it in isset($a) ? $a : fallback
+                $argVal = $ctx->ternary($ctx->callFunction($ctx->constValue("isset"), [$fetchExp]),
+                    $argVal,
+                    $ctx->compileTimeValue($arg->getFallbackData()));
+            }
+
+            $args[] = $argVal;
+        }
+
+        return $args;
+    }
+}
