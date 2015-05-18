@@ -13,11 +13,12 @@ class ArrayToObjectTransformerTest extends \PHPUnit_Framework_TestCase
 {
 
     /**
+     * @param array $methods
      * @return \PHPUnit_Framework_MockObject_MockObject|Transformer
      */
-    protected function getFakeTransformer()
+    protected function getFakeTransformer($methods = [])
     {
-        return $this->getMock('Bumblebee\Transformer', [], [], '', false);
+        return $this->getMock('Bumblebee\Transformer', $methods, [], '', false);
     }
 
     public function testTransformValidatesInput()
@@ -52,6 +53,35 @@ class ArrayToObjectTransformerTest extends \PHPUnit_Framework_TestCase
                 new ArrayToObjectArgumentMetadata(null, "veggie")
             ])
         ]);
+
+        /** @var TestDataClass $transformed */
+        $transformed = $t->transform($dataToTransform, $metadata, $this->getFakeTransformer());
+
+        $this->assertSame("foo", $transformed->getBar());
+        $this->assertSame($dataToTransform["foobar"], $transformed->getFoobar());
+        $this->assertSame($dataToTransform["fruit"], $transformed->getFruit());
+        $this->assertSame($dataToTransform["veggie"], $transformed->getVeggie());
+        $this->assertSame($dataToTransform["foo"], $transformed->foo);
+    }
+
+    public function testElementWithTypeDefined()
+    {
+        $dataToTransform = ["foo" => "bar"];
+
+        $t = new ArrayToObjectTransformer();
+
+        $metadata = new ArrayToObjectMetadata('Bumblebee\Tests\Unit\TypeTransformer\TestDataClass', [
+            new ArrayToObjectArgumentMetadata("custom_type", "foo"),
+            new ArrayToObjectArgumentMetadata(null, "bar", false)
+        ]);
+
+        $transformer = $this->getFakeTransformer(["transform"]);
+        $transformer->expects($this->once())->method("transform")->with("bar", "custom_type")->will($this->returnValue("barbar"));
+
+        /** @var TestDataClass $transformed */
+        $transformed = $t->transform($dataToTransform, $metadata, $transformer);
+
+        $this->assertSame("barbar", $transformed->getBar());
     }
 
 }

@@ -24,7 +24,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Bumblebee\\Test\\": "test/"
+            "Bumblebee\\Tests\\": "test/"
         }
     },
     "extra": {
