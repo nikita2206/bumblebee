@@ -22,13 +22,13 @@ How do I use it?
 
 TODO
 
-How does it work?
+How does it work and what about performance?
 -----------------
 
 TODO
 
 Why shouldn't I just write transformers manually?
-_________________________________________________
+-------------------------------------------------
 
 Well, because writing anything manually sucks. Also because Bumblebee has a declarative syntax for transforming rules
 which can be checked and validated if you ask it to so you don't run into strange bugs. And finally Bumblebee
@@ -38,7 +38,7 @@ precious milliseconds because of couple of extra call-stack frames where Bumbleb
 So in the end you would get optimal and compile-time (build-time) checked code at the same time without harming readability.
 
 What's still missing?
-_____________________
+---------------------
 
 I'm in the process of writing tests right now so this is one of the things that's still not here yet.
 There will be also demand in some TypeTransformers like NullConditionalTransformer (the one that would apply type

@@ -120,7 +120,7 @@ class ArrayToObjectTransformer implements CompilableTypeTransformer
             }
 
             if (is_resource($arg->getFallbackData()) || is_object($arg->getFallbackData())) {
-                $errors[] = new ValidationError("Constructor argument#{$idx} (arrayKey={$arg->getArrayKey()}) can't have fallback of type resource or object");
+                $errors[] = new ValidationError("{$methodName} argument#{$idx} (arrayKey={$arg->getArrayKey()}) can't have fallback of type resource or object");
             }
         }
 

@@ -4,7 +4,6 @@ namespace Bumblebee\TypeTransformer;
 
 use Bumblebee\Compilation\CompilationContext;
 use Bumblebee\Compilation\ExpressionMethodCallable;
-use Bumblebee\Compilation\Variable;
 use Bumblebee\Compiler;
 use Bumblebee\Metadata\DateTimeMetadata;
 use Bumblebee\Metadata\TypeMetadata;
@@ -42,6 +41,10 @@ class DateTimeTextTransformer implements CompilableTypeTransformer
     {
         if ( ! $metadata instanceof DateTimeMetadata) {
             return [new ValidationError(sprintf("%s expects instance of DateTimeMetadata, %s given", __CLASS__, get_class($metadata)))];
+        }
+
+        if ( ! is_string($metadata->getFormat())) {
+            return [new ValidationError(sprintf("Date format is expected to be a string, %s given", gettype($metadata->getFormat())))];
         }
 
         return [];
