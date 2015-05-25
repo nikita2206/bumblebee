@@ -10,4 +10,9 @@ interface Expression
      */
     public function generate();
 
+    /**
+     * @return int
+     */
+    public function evaluationComplexity();
+
 }

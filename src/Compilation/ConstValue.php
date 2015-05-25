@@ -17,4 +17,9 @@ class ConstValue implements Expression, ExpressionMethodCallable, ExpressionCall
         return $this->value;
     }
 
+    public function evaluationComplexity()
+    {
+        return 1;
+    }
+
 }

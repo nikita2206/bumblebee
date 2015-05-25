@@ -5,6 +5,8 @@ namespace Bumblebee\Compilation;
 class ConstructObject implements Expression
 {
 
+    const OBJECT_NEW_COMPLEXITY = 7;
+
     /**
      * @var ClassNameConstructable
      */
@@ -29,6 +31,13 @@ class ConstructObject implements Expression
             $args[] = $arg->generate();
         }
         return $code . implode(",", $args) . ")";
+    }
+
+    public function evaluationComplexity()
+    {
+        return $this->className->evaluationComplexity() + self::OBJECT_NEW_COMPLEXITY + array_reduce($this->arguments, function ($acc, Expression $arg) {
+            return $acc + $arg->evaluationComplexity();
+        }, 0);
     }
 
 }

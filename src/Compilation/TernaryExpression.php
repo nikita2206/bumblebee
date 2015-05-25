@@ -32,4 +32,9 @@ class TernaryExpression implements Expression
     {
         return $this->condition->generate() . " ? " . $this->success->generate() . " : " . $this->failure->generate();
     }
+
+    public function evaluationComplexity()
+    {
+        return 1 + $this->condition->evaluationComplexity() + max($this->success->evaluationComplexity(), $this->failure->evaluationComplexity());
+    }
 }

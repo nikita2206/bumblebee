@@ -30,4 +30,11 @@ class ArrayConstructor implements Expression
         return $code . "]";
     }
 
+    public function evaluationComplexity()
+    {
+        return 1 + array_reduce($this->map, function ($acc, Expression $el) {
+            return $acc + $el->evaluationComplexity();
+        }, 0);
+    }
+
 }

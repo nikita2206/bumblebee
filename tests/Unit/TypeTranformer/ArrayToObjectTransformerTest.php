@@ -25,19 +25,23 @@ class ArrayToObjectTransformerTest extends \PHPUnit_Framework_TestCase
         return $this->getMock('Bumblebee\Transformer', $methods, [], '', false);
     }
 
+    /**
+     * @expectedException \RuntimeException
+     */
     public function testTransformValidatesInput()
     {
         $t = new ArrayToObjectTransformer();
 
-        $this->setExpectedException('RuntimeException');
         $t->transform(null, new ArrayToObjectMetadata(""), $this->getFakeTransformer());
     }
 
+    /**
+     * @expectedException \InvalidArgumentException
+     */
     public function testTransformValidatesMetadata()
     {
         $t = new ArrayToObjectTransformer();
 
-        $this->setExpectedException('InvalidArgumentException');
         $t->transform([], new TypeMetadata(""), $this->getFakeTransformer());
     }
 
@@ -88,11 +92,12 @@ class ArrayToObjectTransformerTest extends \PHPUnit_Framework_TestCase
         $this->assertSame("barbar", $transformed->getBar());
     }
 
+    /**
+     * @expectedException \InvalidArgumentException
+     */
     public function testCompileThrowsInvalidArgumentException()
     {
         $t = new ArrayToObjectTransformer();
-
-        $this->setExpectedException('InvalidArgumentException');
 
         $t->compile(
             $this->getMock('Bumblebee\Compilation\CompilationContext', [], [], '', false),

@@ -26,4 +26,12 @@ class AssignVariable implements Expression
         return $this->var->generate() . " = " . $this->expression->generate();
     }
 
+    /**
+     * @return int
+     */
+    public function evaluationComplexity()
+    {
+        return 1 + $this->expression->evaluationComplexity();
+    }
+
 }

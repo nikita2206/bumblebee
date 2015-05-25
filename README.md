@@ -1,6 +1,8 @@
 Bumblebee
 =========
 
+[![Build Status](https://travis-ci.org/nikita2206/bumblebee.svg?branch=master)](https://travis-ci.org/nikita2206/bumblebee)
+
 What is this?
 -------------
 

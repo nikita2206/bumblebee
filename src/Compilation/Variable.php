@@ -26,4 +26,9 @@ class Variable
         return '$' . $this->name;
     }
 
+    public function evaluationComplexity()
+    {
+        return 1;
+    }
+
 }

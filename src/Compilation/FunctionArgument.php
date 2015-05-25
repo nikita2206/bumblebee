@@ -19,4 +19,12 @@ class FunctionArgument implements Expression
     {
         return ($this->isReference ? "&" : "") . '$' . $this->name;
     }
+
+    /**
+     * @return int
+     */
+    public function evaluationComplexity()
+    {
+        return 1;
+    }
 }

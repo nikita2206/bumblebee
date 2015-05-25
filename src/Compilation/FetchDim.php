@@ -28,4 +28,9 @@ class FetchDim
         return $this->var->generate() . "[" . ($this->dim ? $this->dim->generate() : "") . "]";
     }
 
+    public function evaluationComplexity()
+    {
+        return $this->var->evaluationComplexity() + $this->dim->evaluationComplexity() + 1;
+    }
+
 }

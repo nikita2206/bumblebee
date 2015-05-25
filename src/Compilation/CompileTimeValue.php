@@ -18,4 +18,9 @@ class CompileTimeValue implements Expression
         return var_export($this->value, true);
     }
 
+    public function evaluationComplexity()
+    {
+        return 1;
+    }
+
 }

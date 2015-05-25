@@ -27,4 +27,9 @@ class FetchProperty
         return $this->object->generate() . "->" . $this->propertyName;
     }
 
+    public function evaluationComplexity()
+    {
+        return $this->object->evaluationComplexity() + 1;
+    }
+
 }

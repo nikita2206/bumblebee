@@ -6,6 +6,8 @@ namespace Bumblebee\Compilation;
 class FunctionCall implements Expression, ExpressionMethodCallable, ExpressionDimable
 {
 
+    const FUNC_CALL_COMPLEXITY = 7;
+
     /**
      * @var ExpressionMethodCallable
      */
@@ -30,6 +32,13 @@ class FunctionCall implements Expression, ExpressionMethodCallable, ExpressionDi
             $args[] = $arg->generate();
         }
         return $code . implode(",", $args) . ")";
+    }
+
+    public function evaluationComplexity()
+    {
+        return $this->function->evaluationComplexity() + array_reduce($this->arguments, function ($acc, Expression $arg) {
+            return $acc + $arg->evaluationComplexity();
+        }, 0);
     }
 
 }

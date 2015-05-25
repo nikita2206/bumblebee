@@ -53,4 +53,9 @@ class AnonymousFunction implements Expression
         return $code . "{\n" . implode("\n", $stmts) . "\n}";
     }
 
+    public function evaluationComplexity()
+    {
+        return 1;
+    }
+
 }

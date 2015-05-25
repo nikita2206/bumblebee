@@ -5,7 +5,6 @@ namespace Bumblebee\TypeTransformer;
 use Bumblebee\Compilation\CompilationContext;
 use Bumblebee\Compilation\CompilationFrame;
 use Bumblebee\Compilation\ExpressionMethodCallable;
-use Bumblebee\Compilation\Variable;
 use Bumblebee\Compiler;
 use Bumblebee\Metadata\ObjectArrayFieldMetadata;
 use Bumblebee\Metadata\ObjectArrayMetadata;
@@ -93,7 +92,7 @@ class ObjectArrayTransformer implements CompilableTypeTransformer
         $frame = $ctx->getCurrentFrame();
         $input = $frame->getInputData();
 
-        if ( ! $input instanceof ExpressionMethodCallable || ( ! $input instanceof Variable && count($metadata->getFields()) > 4)) {
+        if ( ! $input instanceof ExpressionMethodCallable || ($input->evaluationComplexity() > 2 && count($metadata->getFields()) > 1)) {
             $inputVar = $ctx->createFreeVariable();
             $frame->addStatement($ctx->assignVariable($inputVar, $input));
             $input = $inputVar;
