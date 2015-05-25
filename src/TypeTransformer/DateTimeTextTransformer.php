@@ -21,7 +21,7 @@ class DateTimeTextTransformer implements CompilableTypeTransformer
      */
     public function transform($data, TypeMetadata $metadata, Transformer $transformer)
     {
-        if ( ! $data instanceof \DateTime && class_exists('DateTimeImmutable', false) && ! $data instanceof \DateTimeImmutable) {
+        if (($data instanceof \DateTime) === (class_exists('DateTimeImmutable', false) && $data instanceof \DateTimeImmutable)) {
             throw new \RuntimeException();
         }
 
