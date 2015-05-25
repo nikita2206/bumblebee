@@ -45,7 +45,7 @@ class ArrayToObjectTransformer implements CompilableTypeTransformer
             if ($setting->isMethod()) {
                 call_user_func_array([$object, $setting->getName()], $this->fetchArguments($data, $setting->getArguments(), $transformer));
             } else {
-                $object->{$setting->getName()} = reset($this->fetchArguments($data, $setting->getArguments(), $transformer));
+                $object->{$setting->getName()} = $this->fetchArguments($data, $setting->getArguments(), $transformer)[0];
             }
         }
 
