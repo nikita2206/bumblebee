@@ -77,8 +77,7 @@ class TypedCollectionTransformer implements CompilableTypeTransformer
         }
 
         $frame = $ctx->getCurrentFrame();
-        $safeTypeName = preg_replace("!^[0-9]+([_A-z][_A-z0-9]+)?.*$!", '\1', $frame->getType());
-        $colVar = $ctx->createFreeVariable("{$safeTypeName}_col");
+        $colVar = $ctx->createFreeVariable("{$frame->getType()}_col");
         if ($metadata->shouldTransformIntoArray()) {
             $colVal = $ctx->arrayConstructor();
         } else {
@@ -88,9 +87,9 @@ class TypedCollectionTransformer implements CompilableTypeTransformer
 
         $keyVar = null;
         if ($metadata->shouldPreserveKeys()) {
-            $keyVar = $ctx->createFreeVariable("{$safeTypeName}_key");
+            $keyVar = $ctx->createFreeVariable("{$frame->getType()}_key");
         }
-        $valVar = $ctx->createFreeVariable("{$safeTypeName}_val");
+        $valVar = $ctx->createFreeVariable("{$frame->getType()}_val");
 
         $foreach = $ctx->foreachStmt($frame->getInputData(),
             new FunctionArgument($valVar->getName()), $keyVar ? new FunctionArgument($keyVar->getName()) : null);

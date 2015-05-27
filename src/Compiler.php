@@ -28,6 +28,8 @@ class Compiler
     }
 
     /**
+     * Returns generated code of an anonymous function for transforming given type
+     *
      * @param string $type
      * @return string
      */

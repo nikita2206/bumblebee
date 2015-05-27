@@ -2,8 +2,6 @@
 
 namespace Bumblebee\Tests\Unit\TypeTransformer;
 
-use Bumblebee\Compilation\ConstructObject;
-use Bumblebee\Compilation\ConstValue;
 use Bumblebee\Compilation\Variable;
 use Bumblebee\Metadata\ArrayToObjectArgumentMetadata;
 use Bumblebee\Metadata\ArrayToObjectMetadata;
