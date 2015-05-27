@@ -59,3 +59,4 @@ class AnonymousFunction implements Expression
     }
 
 }
+
