@@ -12,6 +12,18 @@ class Compiler
 {
 
     /**
+     * Until which level should compiler inline transformation of recursive types.
+     * When type recursion hits this level, compiler will create a recursive closure
+     * for this type and use it from that point.
+     * Sometimes you have recursive types but you know that they will always be
+     * of constant depth then you can set this option to the depth you are expecting
+     * in order to save on some call stack frames when transforming.
+     *
+     * @var int
+     */
+    public $inlineRecursiveTypesUntilLevel = 0;
+
+    /**
      * @var TypeProvider
      */
     protected $types;
@@ -63,8 +75,10 @@ class Compiler
             return;
         }
 
-        if ($ctx->isCurrentFrameInRecursion()) {
-            if ( ! $recursiveTransformerVar = $ctx->getRecursiveTransformer($type)) {
+        $lvl = $ctx->getCurrentFrameRecursionLevel();
+        $recursiveTransformerVar = $ctx->getRecursiveTransformer($type);
+        if ($recursiveTransformerVar || $lvl > $this->inlineRecursiveTypesUntilLevel) {
+            if ($recursiveTransformerVar === null) {
                 $recursiveTransformerVar = $ctx->createFreeVariable("{$type}_trans");
                 $innerCtx = new CompilationContext(new Variable("input"), new Variable("transformer"));
                 $ctx->addRecursiveTransformer($type, $recursiveTransformerVar);

@@ -22,14 +22,16 @@ class TransformerCompilationTestCase extends \PHPUnit_Framework_TestCase
             "object_array" => 'Bumblebee\TypeTransformer\ObjectArrayTransformer',
             "datetime_text" => 'Bumblebee\TypeTransformer\DateTimeTextTransformer',
             "typed_collection" => 'Bumblebee\TypeTransformer\TypedCollectionTransformer',
-            "array_to_object" => 'Bumblebee\TypeTransformer\ArrayToObjectTransformer'
+            "array_to_object" => 'Bumblebee\TypeTransformer\ArrayToObjectTransformer',
+            "number_format" => 'Bumblebee\TypeTransformer\NumberFormatTransformer'
         ]);
 
         $metadatas = new BasicTypeProvider($typeDefinitions);
 
         $compiler = new Compiler($metadatas, $transformers);
+        $code = $compiler->compile($type);
 
-        return eval("return {$compiler->compile($type)};");
+        return eval("return {$code};");
     }
 
     /**

@@ -74,23 +74,22 @@ class CompilationContext
     }
 
     /**
-     * @return bool
+     * @return int
      */
-    public function isCurrentFrameInRecursion()
+    public function getCurrentFrameRecursionLevel()
     {
         /** @var CompilationFrame $top */
         $top = $this->frameStack->pop();
-        $isIt = false;
+        $lvl = 0;
 
         foreach ($this->frameStack as $frame) {
             if ($frame->getType() === $top->getType()) {
-                $isIt = true;
-                break;
+                $lvl++;
             }
         }
         $this->frameStack->push($top);
 
-        return $isIt;
+        return $lvl;
     }
 
     /**

@@ -29,7 +29,7 @@ class LocatorTransformerProvider implements TransformerProvider
     public function get($transformer)
     {
         if ( ! isset($this->transformerClassMap[$transformer])) {
-            throw new \RuntimeException();
+            throw new \RuntimeException("There's no transformer '{$transformer}'");
         }
 
         return isset($this->instantiated[$transformer]) ? $this->instantiated[$transformer]
