@@ -59,10 +59,11 @@ class Compiler
     }
 
     /**
-     * Acts on a $ctx->currentFrame, doesn't return anything
+     * Acts on a $ctx->currentFrame
      *
      * @param CompilationContext $ctx
      * @param string $type
+     * @return void
      */
     public function _compileType(CompilationContext $ctx, $type)
     {
