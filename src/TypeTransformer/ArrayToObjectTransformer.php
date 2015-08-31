@@ -7,8 +7,8 @@ use Bumblebee\Compilation\CompilationFrame;
 use Bumblebee\Compilation\Expression;
 use Bumblebee\Compilation\ExpressionDimable;
 use Bumblebee\Compiler;
-use Bumblebee\Metadata\ArrayToObjectArgumentMetadata;
-use Bumblebee\Metadata\ArrayToObjectMetadata;
+use Bumblebee\Metadata\ArrayToObject\ArrayToObjectArgumentMetadata;
+use Bumblebee\Metadata\ArrayToObject\ArrayToObjectMetadata;
 use Bumblebee\Metadata\TypeMetadata;
 use Bumblebee\Metadata\ValidationContext;
 use Bumblebee\Metadata\ValidationError;
@@ -63,10 +63,15 @@ class ArrayToObjectTransformer implements CompilableTypeTransformer
         $args = [];
 
         foreach ($argsMetadata as $arg) {
+            $argVal = $data;
             if ($arg->isKeyAlwaysSet()) {
-                $argVal = $data[$arg->getArrayKey()];
+                foreach ($arg->getArrayKey() as $key) {
+                    $argVal = $argVal[$key];
+                }
             } else {
-                $argVal = isset($data[$arg->getArrayKey()]) ? $data[$arg->getArrayKey()] : $arg->getFallbackData();
+                foreach ($arg->getArrayKey() as $key) {
+                    $argVal = isset($data[$key]) ? $data[$key] : $arg->getFallbackData();
+                }
             }
 
             if ($arg->getType()) {
@@ -142,14 +147,15 @@ class ArrayToObjectTransformer implements CompilableTypeTransformer
         }
 
         $frame = $ctx->getCurrentFrame();
+        $input = $frame->getInputData();
 
-        if ( ! ($dimable = $frame->getInputData()) instanceof ExpressionDimable) {
-            $nonDimable = $dimable;
-            $dimable    = $ctx->createFreeVariable();
-            $frame->addStatement($ctx->assignVariable($dimable, $nonDimable));
+        if ( ! ($input instanceof ExpressionDimable)) {
+            $nonDimable = $input;
+            $input      = $ctx->createFreeVariable();
+            $frame->addStatement($ctx->assignVariable($input, $nonDimable));
         }
 
-        $args = $this->compileArguments($dimable, $metadata->getConstructorArguments(), $ctx, $compiler);
+        $args = $this->compileArguments($input, $metadata->getConstructorArguments(), $ctx, $compiler);
         $objectVal = $ctx->constructObject($ctx->constValue($metadata->getClassName()), $args);
 
         if ($metadata->getSettingMetadata()) {
@@ -157,7 +163,7 @@ class ArrayToObjectTransformer implements CompilableTypeTransformer
             $frame->addStatement($ctx->assignVariable($objectVar, $objectVal));
 
             foreach ($metadata->getSettingMetadata() as $setting) {
-                $args = $this->compileArguments($dimable, $setting->getArguments(), $ctx, $compiler);
+                $args = $this->compileArguments($input, $setting->getArguments(), $ctx, $compiler);
 
                 if ($setting->isMethod()) {
                     $frame->addStatement($ctx->callMethod($objectVar, $setting->getName(), $args));
@@ -184,7 +190,10 @@ class ArrayToObjectTransformer implements CompilableTypeTransformer
         $frame = $ctx->getCurrentFrame();
         $args = [];
         foreach ($argsMetadata as $arg) {
-            $fetchExp = $ctx->fetchDim($input, $ctx->compileTimeValue($arg->getArrayKey()));
+            $fetchExp = $input;
+            foreach ($arg->getArrayKey() as $key) {
+                $fetchExp = $ctx->fetchDim($fetchExp, $ctx->compileTimeValue($key));
+            }
 
             if ($arg->getType()) {
                 $ctx->pushFrame(new CompilationFrame($fetchExp, $arg->getType()));

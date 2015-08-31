@@ -3,8 +3,9 @@
 namespace Bumblebee\Tests\Unit\TypeTransformer;
 
 use Bumblebee\Compilation\Variable;
-use Bumblebee\Metadata\ObjectArrayFieldMetadata;
-use Bumblebee\Metadata\ObjectArrayMetadata;
+use Bumblebee\Metadata\ObjectArray\ObjectArrayAccessorMetadata;
+use Bumblebee\Metadata\ObjectArray\ObjectArrayElementMetadata;
+use Bumblebee\Metadata\ObjectArray\ObjectArrayMetadata;
 use Bumblebee\Metadata\TypeMetadata;
 use Bumblebee\Transformer;
 use Bumblebee\TypeTransformer\ObjectArrayTransformer;
@@ -38,8 +39,8 @@ class ObjectArrayTransformerTest extends \PHPUnit_Framework_TestCase
         $transformer = $this->getFakeTransformer();
 
         $result = $t->transform($subj, new ObjectArrayMetadata([
-            new ObjectArrayFieldMetadata(null, "first", "getFoo", true),
-            new ObjectArrayFieldMetadata(null, "second", "bar", false)
+            new ObjectArrayElementMetadata(null, "first", [new ObjectArrayAccessorMetadata("getFoo")]),
+            new ObjectArrayElementMetadata(null, "second", [new ObjectArrayAccessorMetadata("bar", false)])
         ]), $transformer);
         $this->assertSame(["first" => "foo", "second" => "bar"], $result);
 
@@ -55,8 +56,8 @@ class ObjectArrayTransformerTest extends \PHPUnit_Framework_TestCase
         $transformer->expects($this->once())->method("transform")->with("foo", "fooType")->will($this->returnValue("trans_foo"));
 
         $result = $t->transform($subj, new ObjectArrayMetadata([
-            new ObjectArrayFieldMetadata("fooType", "first", "getFoo", true),
-            new ObjectArrayFieldMetadata(null, "second", "bar", false)
+            new ObjectArrayElementMetadata("fooType", "first", [new ObjectArrayAccessorMetadata("getFoo")]),
+            new ObjectArrayElementMetadata(null, "second", [new ObjectArrayAccessorMetadata("bar", false)])
         ]), $transformer);
         $this->assertSame(["first" => "trans_foo", "second" => "bar"], $result);
     }
@@ -83,15 +84,15 @@ class ObjectArrayTransformerTest extends \PHPUnit_Framework_TestCase
         $ctx->expects($this->once())->method("validateLater")->with("deferred_type");
 
         $errors = $t->validateMetadata($ctx, new ObjectArrayMetadata([
-            new ObjectArrayFieldMetadata("deferred_type", "foo", "foo", false),
-            new ObjectArrayFieldMetadata(null, "repeated", "bar", false),
-            new ObjectArrayFieldMetadata(null, "repeated", "bar", false),
+            new ObjectArrayElementMetadata("deferred_type", "foo", [new ObjectArrayAccessorMetadata("foo", false)]),
+            new ObjectArrayElementMetadata(null, "repeated", [new ObjectArrayAccessorMetadata("bar", false)]),
+            new ObjectArrayElementMetadata(null, "repeated", [new ObjectArrayAccessorMetadata("bar", false)]),
             new \stdClass()
         ]));
 
         $this->assertCount(2, $errors);
         $this->assertSame("Field#2 'repeated' has a duplicated name", $errors[0]->getMessage());
-        $this->assertSame('Field#3 is of type stdClass, instance of Bumblebee\Metadata\ObjectArrayFieldMetadata expected', $errors[1]->getMessage());
+        $this->assertSame('Field#3 is of type stdClass, instance of Bumblebee\Metadata\ObjectArray\ObjectArrayFieldMetadata expected', $errors[1]->getMessage());
     }
 
 }

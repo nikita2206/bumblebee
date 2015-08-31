@@ -6,8 +6,8 @@ use Bumblebee\Compilation\CompilationContext;
 use Bumblebee\Compilation\CompilationFrame;
 use Bumblebee\Compilation\ExpressionMethodCallable;
 use Bumblebee\Compiler;
-use Bumblebee\Metadata\ObjectArrayFieldMetadata;
-use Bumblebee\Metadata\ObjectArrayMetadata;
+use Bumblebee\Metadata\ObjectArray\ObjectArrayElementMetadata;
+use Bumblebee\Metadata\ObjectArray\ObjectArrayMetadata;
 use Bumblebee\Metadata\TypeMetadata;
 use Bumblebee\Metadata\ValidationContext;
 use Bumblebee\Metadata\ValidationError;
@@ -30,7 +30,10 @@ class ObjectArrayTransformer implements CompilableTypeTransformer
 
         $output = [];
         foreach ($metadata->getFields() as $field) {
-            $fieldValue = $field->isMethod() ? $data->{$field->getInputName()}() : $data->{$field->getInputName()};
+            $fieldValue = $data;
+            foreach ($field->getAccessorChain() as $accessor) {
+                $fieldValue = $accessor->isMethod() ? $data->{$accessor->getName()}() : $data->{$accessor->getName()};
+            }
 
             if ($field->getType()) {
                 $fieldValue = $transformer->transform($fieldValue, $field->getType());
@@ -57,9 +60,9 @@ class ObjectArrayTransformer implements CompilableTypeTransformer
             $occuredNames = [];
 
             foreach ($metadata->getFields() as $idx => $field) {
-                if ( ! $field instanceof ObjectArrayFieldMetadata) {
+                if ( ! $field instanceof ObjectArrayElementMetadata) {
                     $errors[] = new ValidationError(sprintf("Field#%s is of type %s, instance of %s expected",
-                        $idx, is_object($field) ? get_class($field) : gettype($field), 'Bumblebee\Metadata\ObjectArrayFieldMetadata'));
+                        $idx, is_object($field) ? get_class($field) : gettype($field), 'Bumblebee\Metadata\ObjectArray\ObjectArrayFieldMetadata'));
                 } else {
                     if (isset($occuredNames[$field->getName()])) {
                         $errors[] = new ValidationError(sprintf("Field#%s '%s' has a duplicated name", $idx, $field->getName()));
@@ -100,7 +103,10 @@ class ObjectArrayTransformer implements CompilableTypeTransformer
 
         $outputArray = $ctx->arrayConstructor();
         foreach ($metadata->getFields() as $field) {
-            $fieldValue = $field->isMethod() ? $ctx->callMethod($input, $field->getInputName(), []) : $ctx->fetchProperty($input, $field->getInputName());
+            $fieldValue = $input;
+            foreach ($field->getAccessorChain() as $accessor) {
+                $fieldValue = $accessor->isMethod() ? $ctx->callMethod($fieldValue, $accessor->getName()) : $ctx->fetchProperty($fieldValue, $accessor->getName());
+            }
 
             if ($field->getType()) {
                 $ctx->pushFrame(new CompilationFrame($fieldValue, $field->getType()));

@@ -1,0 +1,18 @@
+ad:
+  tran: array_to_object
+  class: Ad
+  settings:
+    name: name
+    bid:
+      key: ""
+      tran: array_to_object
+      class: Bid
+      settings:
+        amount: bid
+        paymentType: paymentType
+ad_to_array:
+  tran: object_array
+  elements:
+    name: name
+    bid: bid->amount
+    paymentType: bid->paymentType

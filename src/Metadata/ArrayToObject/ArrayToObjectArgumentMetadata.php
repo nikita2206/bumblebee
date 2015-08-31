@@ -1,6 +1,6 @@
 <?php
 
-namespace Bumblebee\Metadata;
+namespace Bumblebee\Metadata\ArrayToObject;
 
 class ArrayToObjectArgumentMetadata
 {
@@ -11,7 +11,7 @@ class ArrayToObjectArgumentMetadata
     protected $type;
 
     /**
-     * @var string
+     * @var array
      */
     protected $arrayKey;
 
@@ -27,11 +27,11 @@ class ArrayToObjectArgumentMetadata
 
     /**
      * @param string $type
-     * @param string $arrayKey
+     * @param array $arrayKey A sequence of array keys
      * @param bool $assumeAlwaysSet
      * @param null|string|float|int|array $fallback
      */
-    public function __construct($type, $arrayKey, $assumeAlwaysSet = true, $fallback = null)
+    public function __construct($type, array $arrayKey, $assumeAlwaysSet = true, $fallback = null)
     {
         $this->type = $type;
         $this->arrayKey = $arrayKey;
@@ -48,7 +48,7 @@ class ArrayToObjectArgumentMetadata
     }
 
     /**
-     * @return string
+     * @return array
      */
     public function getArrayKey()
     {

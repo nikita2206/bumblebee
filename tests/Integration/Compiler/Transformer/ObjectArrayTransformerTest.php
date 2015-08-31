@@ -2,8 +2,9 @@
 
 namespace Bumblebee\Tests\Integration\Compiler\Transformer;
 
-use Bumblebee\Metadata\ObjectArrayFieldMetadata;
-use Bumblebee\Metadata\ObjectArrayMetadata;
+use Bumblebee\Metadata\ObjectArray\ObjectArrayAccessorMetadata;
+use Bumblebee\Metadata\ObjectArray\ObjectArrayElementMetadata;
+use Bumblebee\Metadata\ObjectArray\ObjectArrayMetadata;
 
 class ObjectArrayTransformerTest extends TransformerCompilationTestCase
 {
@@ -12,13 +13,13 @@ class ObjectArrayTransformerTest extends TransformerCompilationTestCase
     {
         $t = $this->generateTransformer("foo", [
             "foo" => new ObjectArrayMetadata([
-                new ObjectArrayFieldMetadata("bar", 0, "getFoo", true),
-                new ObjectArrayFieldMetadata(null, 1, "getBar", true),
-                new ObjectArrayFieldMetadata(null, "apple", "apple", false)
+                new ObjectArrayElementMetadata("bar", 0, [new ObjectArrayAccessorMetadata("getFoo")]),
+                new ObjectArrayElementMetadata(null, 1, [new ObjectArrayAccessorMetadata("getBar")]),
+                new ObjectArrayElementMetadata(null, "apple", [new ObjectArrayAccessorMetadata("apple", false)])
             ]),
             "bar" => new ObjectArrayMetadata([
-                new ObjectArrayFieldMetadata(null, 1, "getBar", true),
-                new ObjectArrayFieldMetadata(null, "apple", "apple", false)
+                new ObjectArrayElementMetadata(null, 1, [new ObjectArrayAccessorMetadata("getBar")]),
+                new ObjectArrayElementMetadata(null, "apple", [new ObjectArrayAccessorMetadata("apple", false)])
             ])
         ]);
         $transformer = $this->getFakeTransformer();

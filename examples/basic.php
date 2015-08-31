@@ -6,8 +6,8 @@ use Bumblebee\Metadata\ValidationContext,
     Bumblebee\Metadata\TypeMetadata,
     Bumblebee\Transformer,
     Bumblebee\TypeTransformer\TypeTransformer,
-    Bumblebee\Metadata\ObjectArrayMetadata,
-    Bumblebee\Metadata\ObjectArrayFieldMetadata;
+    Bumblebee\Metadata\ObjectArray\ObjectArrayMetadata,
+    Bumblebee\Metadata\ObjectArray\ObjectArrayElementMetadata;
 
 
 /**
@@ -127,16 +127,16 @@ class TagsTransformer implements TypeTransformer
  */
 $typeProvider = new \Bumblebee\BasicTypeProvider([
     "blog_post" => new ObjectArrayMetadata([
-        new ObjectArrayFieldMetadata(null, "title", "getTitle", true),
-        new ObjectArrayFieldMetadata(null, "short_description", "getShortDescription", true),
-        new ObjectArrayFieldMetadata("datetime_iso8601", "posted_at", "getPostedAt", true),
-        new ObjectArrayFieldMetadata("comments", "comments", "getComments", true),
-        new ObjectArrayFieldMetadata("tags", "tags", "getTags", true)
+        new ObjectArrayElementMetadata(null, "title", [new \Bumblebee\Metadata\ObjectArray\ObjectArrayAccessorMetadata("getTitle")]),
+        new ObjectArrayElementMetadata(null, "short_description", [new \Bumblebee\Metadata\ObjectArray\ObjectArrayAccessorMetadata("getShortDescription")]),
+        new ObjectArrayElementMetadata("datetime_iso8601", "posted_at", [new \Bumblebee\Metadata\ObjectArray\ObjectArrayAccessorMetadata("getPostedAt")]),
+        new ObjectArrayElementMetadata("comments", "comments", [new \Bumblebee\Metadata\ObjectArray\ObjectArrayAccessorMetadata("getComments")]),
+        new ObjectArrayElementMetadata("tags", "tags", [new \Bumblebee\Metadata\ObjectArray\ObjectArrayAccessorMetadata("getTags")])
     ]),
     "comments" => new \Bumblebee\Metadata\TypedCollectionMetadata("comment"),
     "comment" => new ObjectArrayMetadata([
-        new ObjectArrayFieldMetadata(null, "content", "getContent", true),
-        new ObjectArrayFieldMetadata("comments", "children", "getChildren", true)
+        new ObjectArrayElementMetadata(null, "content", [new \Bumblebee\Metadata\ObjectArray\ObjectArrayAccessorMetadata("getContent")]),
+        new ObjectArrayElementMetadata("comments", "children", [new \Bumblebee\Metadata\ObjectArray\ObjectArrayAccessorMetadata("getChildren")])
     ]),
     "tags" => new TypeMetadata("tags_transformer"),
     "datetime_iso8601" => new \Bumblebee\Metadata\DateTimeMetadata(DATE_ISO8601)
@@ -163,3 +163,61 @@ $post = new BlogPost("You Won't Believe What Scientists Have Found Out", "Lots o
 $postArray = $transformer->transform($post, "blog_post");
 
 var_dump($postArray);
+
+$input = [
+    "name" => "Qwe",
+    "bid" => 1234,
+    "paymentType" => "cpm"
+];
+
+class Ad
+{
+
+    public $name;
+
+    public $bid;
+
+}
+
+class Bid
+{
+
+    public $amount;
+
+    public $paymentType;
+
+}
+
+$typeProvider = new \Bumblebee\BasicTypeProvider([
+    "ad" => new \Bumblebee\Metadata\ArrayToObject\ArrayToObjectMetadata(Ad::class, [], [
+        new \Bumblebee\Metadata\ArrayToObject\ArrayToObjectSettingMetadata("name", [
+            new \Bumblebee\Metadata\ArrayToObject\ArrayToObjectArgumentMetadata(null, ["name"])
+        ], false),
+        new \Bumblebee\Metadata\ArrayToObject\ArrayToObjectSettingMetadata("bid", [
+            new \Bumblebee\Metadata\ArrayToObject\ArrayToObjectArgumentMetadata("bid", [])
+        ], false)
+    ]),
+    "bid" => new \Bumblebee\Metadata\ArrayToObject\ArrayToObjectMetadata(Bid::class, [], [
+        new \Bumblebee\Metadata\ArrayToObject\ArrayToObjectSettingMetadata("amount", [
+            new \Bumblebee\Metadata\ArrayToObject\ArrayToObjectArgumentMetadata(null, ["bid"])
+        ], false),
+        new \Bumblebee\Metadata\ArrayToObject\ArrayToObjectSettingMetadata("paymentType", [
+            new \Bumblebee\Metadata\ArrayToObject\ArrayToObjectArgumentMetadata(null, ["paymentType"])
+        ], false)
+    ]),
+    "ad_to_array" => new ObjectArrayMetadata([
+        new ObjectArrayElementMetadata(null, "name", [new \Bumblebee\Metadata\ObjectArray\ObjectArrayAccessorMetadata("name", false)]),
+        new ObjectArrayElementMetadata(null, "bid", [new \Bumblebee\Metadata\ObjectArray\ObjectArrayAccessorMetadata("bid", false), new \Bumblebee\Metadata\ObjectArray\ObjectArrayAccessorMetadata("amount", false)]),
+        new ObjectArrayElementMetadata(null, "paymentType", [new \Bumblebee\Metadata\ObjectArray\ObjectArrayAccessorMetadata("bid", false), new \Bumblebee\Metadata\ObjectArray\ObjectArrayAccessorMetadata("paymentType", false)])
+    ])
+]);
+
+
+$transformer = new Transformer($typeProvider, $transformerProvider);
+$compiler = new \Bumblebee\Compiler($typeProvider, $transformerProvider);
+
+$fnCode = $compiler->compile("ad");
+
+$fn = eval("return {$fnCode};");
+
+var_dump($fn($input, $transformer));

@@ -1,6 +1,8 @@
 <?php
 
-namespace Bumblebee\Metadata;
+namespace Bumblebee\Metadata\ArrayToObject;
+
+use Bumblebee\Metadata\TypeMetadata;
 
 class ArrayToObjectMetadata extends TypeMetadata
 {

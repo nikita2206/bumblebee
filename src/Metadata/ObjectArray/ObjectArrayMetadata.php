@@ -1,7 +1,8 @@
 <?php
 
-namespace Bumblebee\Metadata;
+namespace Bumblebee\Metadata\ObjectArray;
 
+use Bumblebee\Metadata\TypeMetadata;
 
 class ObjectArrayMetadata extends TypeMetadata
 {
@@ -9,7 +10,7 @@ class ObjectArrayMetadata extends TypeMetadata
     protected $fields;
 
     /**
-     * @param ObjectArrayFieldMetadata[] $fields
+     * @param ObjectArrayElementMetadata[] $fields
      */
     public function __construct(array $fields)
     {
@@ -18,13 +19,13 @@ class ObjectArrayMetadata extends TypeMetadata
         $this->fields = $fields;
     }
 
-    public function addField(ObjectArrayFieldMetadata $field)
+    public function addField(ObjectArrayElementMetadata $field)
     {
         $this->fields[] = $field;
     }
 
     /**
-     * @return ObjectArrayFieldMetadata[]
+     * @return ObjectArrayElementMetadata[]
      */
     public function getFields()
     {

@@ -3,9 +3,9 @@
 namespace Bumblebee\Tests\Unit\TypeTransformer;
 
 use Bumblebee\Compilation\Variable;
-use Bumblebee\Metadata\ArrayToObjectArgumentMetadata;
-use Bumblebee\Metadata\ArrayToObjectMetadata;
-use Bumblebee\Metadata\ArrayToObjectSettingMetadata;
+use Bumblebee\Metadata\ArrayToObject\ArrayToObjectArgumentMetadata;
+use Bumblebee\Metadata\ArrayToObject\ArrayToObjectMetadata;
+use Bumblebee\Metadata\ArrayToObject\ArrayToObjectSettingMetadata;
 use Bumblebee\Metadata\TypeMetadata;
 use Bumblebee\Metadata\ValidationContext;
 use Bumblebee\Transformer;
@@ -50,13 +50,13 @@ class ArrayToObjectTransformerTest extends \PHPUnit_Framework_TestCase
         $t = new ArrayToObjectTransformer();
 
         $metadata = new ArrayToObjectMetadata('Bumblebee\Tests\Unit\TypeTransformer\TestDataClass', [
-            new ArrayToObjectArgumentMetadata(null, "bar", false, "foo"),
-            new ArrayToObjectArgumentMetadata(null, "foobar")
+            new ArrayToObjectArgumentMetadata(null, ["bar"], false, "foo"),
+            new ArrayToObjectArgumentMetadata(null, ["foobar"])
         ], [
-            new ArrayToObjectSettingMetadata("foo", [new ArrayToObjectArgumentMetadata(null, "foo")], false),
+            new ArrayToObjectSettingMetadata("foo", [new ArrayToObjectArgumentMetadata(null, ["foo"])], false),
             new ArrayToObjectSettingMetadata("setGroceries", [
-                new ArrayToObjectArgumentMetadata(null, "fruit"),
-                new ArrayToObjectArgumentMetadata(null, "veggie")
+                new ArrayToObjectArgumentMetadata(null, ["fruit"]),
+                new ArrayToObjectArgumentMetadata(null, ["veggie"])
             ])
         ]);
 
@@ -77,8 +77,8 @@ class ArrayToObjectTransformerTest extends \PHPUnit_Framework_TestCase
         $t = new ArrayToObjectTransformer();
 
         $metadata = new ArrayToObjectMetadata('Bumblebee\Tests\Unit\TypeTransformer\TestDataClass', [
-            new ArrayToObjectArgumentMetadata("custom_type", "foo"),
-            new ArrayToObjectArgumentMetadata(null, "bar", false)
+            new ArrayToObjectArgumentMetadata("custom_type", ["foo"]),
+            new ArrayToObjectArgumentMetadata(null, ["bar"], false)
         ]);
 
         $transformer = $this->getFakeTransformer(["transform"]);
@@ -109,7 +109,7 @@ class ArrayToObjectTransformerTest extends \PHPUnit_Framework_TestCase
         $t = new ArrayToObjectTransformer();
 
         foreach ([new ArrayToObjectMetadata("stdClass"), new ArrayToObjectMetadata("stdClass", [], [
-            new ArrayToObjectSettingMetadata("foo", [new ArrayToObjectArgumentMetadata(null, "foo")], false)
+            new ArrayToObjectSettingMetadata("foo", [new ArrayToObjectArgumentMetadata(null, ["foo"])], false)
         ])] as $metadata) {
             $frame = $this->getMock('Bumblebee\Compilation\CompilationFrame', [], ["getInputData", "addStatement", "setResult"], '', false);
             $frame->expects($this->any())->method("getInputData")->will($this->returnValue(new Variable("input")));
@@ -137,11 +137,11 @@ class ArrayToObjectTransformerTest extends \PHPUnit_Framework_TestCase
         $ctx->expects($this->once())->method("validateLater")->with("deferred_type", "root_type -> __construct -> Arg#0");
 
         $errors = $t->validateMetadata($ctx, new ArrayToObjectMetadata('stdClass', [
-            new ArrayToObjectArgumentMetadata("deferred_type", "ctor_arg0", false, new \stdClass())
+            new ArrayToObjectArgumentMetadata("deferred_type", ["ctor_arg0"], false, new \stdClass())
         ], [
             new ArrayToObjectSettingMetadata("prop", [
-                new ArrayToObjectArgumentMetadata(null, "propVal"),
-                new ArrayToObjectArgumentMetadata(null, "extraVal")
+                new ArrayToObjectArgumentMetadata(null, ["propVal"]),
+                new ArrayToObjectArgumentMetadata(null, ["extraVal"])
             ], false)
         ]));
 

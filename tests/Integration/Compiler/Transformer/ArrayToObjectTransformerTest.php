@@ -2,9 +2,9 @@
 
 namespace Bumblebee\Tests\Integration\Compiler\Transformer;
 
-use Bumblebee\Metadata\ArrayToObjectArgumentMetadata;
-use Bumblebee\Metadata\ArrayToObjectMetadata;
-use Bumblebee\Metadata\ArrayToObjectSettingMetadata;
+use Bumblebee\Metadata\ArrayToObject\ArrayToObjectArgumentMetadata;
+use Bumblebee\Metadata\ArrayToObject\ArrayToObjectMetadata;
+use Bumblebee\Metadata\ArrayToObject\ArrayToObjectSettingMetadata;
 
 class ArrayToObjectTransformerTest extends TransformerCompilationTestCase
 {
@@ -13,7 +13,7 @@ class ArrayToObjectTransformerTest extends TransformerCompilationTestCase
     {
         $t = $this->generateTransformer("foo", [
             "foo" => new ArrayToObjectMetadata("stdClass", [], [
-                new ArrayToObjectSettingMetadata("qwe", [new ArrayToObjectArgumentMetadata(null, "foo")], false)
+                new ArrayToObjectSettingMetadata("qwe", [new ArrayToObjectArgumentMetadata(null, ["foo"])], false)
             ])
         ]);
         $transformer = $this->getFakeTransformer();
@@ -28,16 +28,16 @@ class ArrayToObjectTransformerTest extends TransformerCompilationTestCase
     {
         $t = $this->generateTransformer("user", [
             "user" => new ArrayToObjectMetadata('Bumblebee\Tests\Integration\Compiler\Transformer\ArrayToObjectUser', [
-                new ArrayToObjectArgumentMetadata(null, "user"),
-                new ArrayToObjectArgumentMetadata(null, "email"),
-                new ArrayToObjectArgumentMetadata(null, "password")
+                new ArrayToObjectArgumentMetadata(null, ["user"]),
+                new ArrayToObjectArgumentMetadata(null, ["email"]),
+                new ArrayToObjectArgumentMetadata(null, ["password"])
             ], [
                 new ArrayToObjectSettingMetadata("details", [
-                    new ArrayToObjectArgumentMetadata(null, "details", false, ""),
+                    new ArrayToObjectArgumentMetadata(null, ["details"], false, ""),
                 ], false),
                 new ArrayToObjectSettingMetadata("setInfo", [
-                    new ArrayToObjectArgumentMetadata(null, "address", false),
-                    new ArrayToObjectArgumentMetadata(null, "phone", false)
+                    new ArrayToObjectArgumentMetadata(null, ["address"], false),
+                    new ArrayToObjectArgumentMetadata(null, ["phone"], false)
                 ])
             ])
         ]);
@@ -69,12 +69,12 @@ class ArrayToObjectTransformerTest extends TransformerCompilationTestCase
     {
         $t = $this->generateTransformer("user", [
             "user" => new ArrayToObjectMetadata('Bumblebee\Tests\Integration\Compiler\Transformer\ArrayToObjectUser', [
-                new ArrayToObjectArgumentMetadata(null, "user"),
-                new ArrayToObjectArgumentMetadata(null, "email", false),
-                new ArrayToObjectArgumentMetadata(null, "password", false)
+                new ArrayToObjectArgumentMetadata(null, ["user"]),
+                new ArrayToObjectArgumentMetadata(null, ["email"], false),
+                new ArrayToObjectArgumentMetadata(null, ["password"], false)
             ], [
                 new ArrayToObjectSettingMetadata("setParent", [
-                    new ArrayToObjectArgumentMetadata("user", "parent", false, null)
+                    new ArrayToObjectArgumentMetadata("user", ["parent"], false, null)
                 ])
             ])
         ]);

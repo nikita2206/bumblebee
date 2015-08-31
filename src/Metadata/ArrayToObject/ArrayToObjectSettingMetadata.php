@@ -1,6 +1,6 @@
 <?php
 
-namespace Bumblebee\Metadata;
+namespace Bumblebee\Metadata\ArrayToObject;
 
 class ArrayToObjectSettingMetadata
 {
