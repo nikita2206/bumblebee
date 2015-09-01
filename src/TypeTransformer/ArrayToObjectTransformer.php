@@ -70,7 +70,12 @@ class ArrayToObjectTransformer implements CompilableTypeTransformer
                 }
             } else {
                 foreach ($arg->getArrayKey() as $key) {
-                    $argVal = isset($data[$key]) ? $data[$key] : $arg->getFallbackData();
+                    if (isset($data[$key])) {
+                        $argVal = $data[$key];
+                    } else {
+                        $argVal = $arg->getFallbackData();
+                        break;
+                    }
                 }
             }
 
@@ -125,7 +130,12 @@ class ArrayToObjectTransformer implements CompilableTypeTransformer
             }
 
             if (is_resource($arg->getFallbackData()) || is_object($arg->getFallbackData())) {
-                $errors[] = new ValidationError("{$methodName} argument#{$idx} (arrayKey={$arg->getArrayKey()}) can't have fallback of type resource or object");
+                $arrayKey = $arg->getArrayKey();
+                $firstKey = (string)array_shift($arrayKey);
+                $arrayKeyString = array_reduce($arrayKey, function ($composed, $key) {
+                    return $composed . "[{$key}]";
+                }, $firstKey);
+                $errors[] = new ValidationError("{$methodName} argument#{$idx} (arrayKey={$arrayKeyString}) can't have fallback of type resource or object");
             }
         }
 

@@ -1,18 +1,27 @@
 ad:
   tran: array_to_object
   class: Ad
+  #constructor:
+  #  - qwe[qwe]
+  #  - { tran: qwe, elements: [] }
   settings:
-    name: name
+    name: trim(name)
+    # name:
+    #   key: name
+    #   type: trim
     bid:
       key: ""
       tran: array_to_object
-      class: Bid
-      settings:
-        amount: bid
-        paymentType: paymentType
+      props:
+        class: Bid
+        settings:
+          amount: bid
+          paymentType: paymentType
 ad_to_array:
   tran: object_array
   elements:
     name: name
     bid: bid->amount
     paymentType: bid->paymentType
+trim:
+  tran: trim

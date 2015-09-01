@@ -1,7 +1,8 @@
 <?php
 
-namespace Bumblebee\Configuration;
+namespace Bumblebee\Configuration\ArrayConfiguration;
 
+use Bumblebee\Configuration\ArrayConfigurationCompiler;
 use Bumblebee\Metadata\TypeMetadata;
 
 interface TransformerConfigurationCompiler
@@ -9,8 +10,9 @@ interface TransformerConfigurationCompiler
 
     /**
      * @param array $configuration
+     * @param ArrayConfigurationCompiler $compiler
      * @return TypeMetadata
      */
-    public function compile(array $configuration);
+    public function compile(array $configuration, ArrayConfigurationCompiler $compiler);
 
 }

@@ -2,6 +2,7 @@
 
 namespace Bumblebee\Configuration;
 
+use Bumblebee\Configuration\ArrayConfiguration\TransformerConfigurationCompiler;
 use Bumblebee\Metadata\TypeMetadata;
 
 class ArrayConfigurationCompiler
@@ -13,12 +14,18 @@ class ArrayConfigurationCompiler
     protected $compilers;
 
     /**
+     * @var array
+     */
+    protected $deferred;
+
+    /**
      * @param array $configuration
      * @return TypeMetadata[]
      * @throws \Exception
      */
     public function compile(array $configuration)
     {
+        $this->deferred = [];
         $compiled = [];
 
         foreach ($configuration as $typeName => $typeDefinition) {
@@ -28,9 +35,10 @@ class ArrayConfigurationCompiler
 
             $transformer = isset($typeDefinition["transformer"]) ? $typeDefinition["transformer"] : $typeDefinition["tran"];
 
-            $compiled[$typeName] = $this->getCompiler($transformer)->compile($typeDefinition);
+            $compiled[$typeName] = $this->getCompiler($transformer)->compile($typeDefinition, $this);
         }
 
+        $this->deferred = null;
         return $compiled;
     }
 

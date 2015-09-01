@@ -137,7 +137,7 @@ class ArrayToObjectTransformerTest extends \PHPUnit_Framework_TestCase
         $ctx->expects($this->once())->method("validateLater")->with("deferred_type", "root_type -> __construct -> Arg#0");
 
         $errors = $t->validateMetadata($ctx, new ArrayToObjectMetadata('stdClass', [
-            new ArrayToObjectArgumentMetadata("deferred_type", ["ctor_arg0"], false, new \stdClass())
+            new ArrayToObjectArgumentMetadata("deferred_type", ["ctor_arg0", "foo"], false, new \stdClass())
         ], [
             new ArrayToObjectSettingMetadata("prop", [
                 new ArrayToObjectArgumentMetadata(null, ["propVal"]),
@@ -146,7 +146,7 @@ class ArrayToObjectTransformerTest extends \PHPUnit_Framework_TestCase
         ]));
 
         $this->assertCount(2, $errors);
-        $this->assertSame("__construct argument#0 (arrayKey=ctor_arg0) can't have fallback of type resource or object", $errors[0]->getMessage());
+        $this->assertSame("__construct argument#0 (arrayKey=ctor_arg0[foo]) can't have fallback of type resource or object", $errors[0]->getMessage());
         $this->assertSame("Property assigning expects only one argument, 2 given for property prop", $errors[1]->getMessage());
     }
 
