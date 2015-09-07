@@ -23,5 +23,9 @@ ad_to_array:
     name: name
     bid: bid->amount
     paymentType: bid->paymentType
+    created: date_iso(created)
 trim:
   tran: trim
+date_iso:
+  tran: datetime_text
+  format: 'Y-m-d\TH:i:sO'

@@ -10,6 +10,111 @@ use Bumblebee\Metadata\ValidationContext,
     Bumblebee\Metadata\ObjectArray\ObjectArrayElementMetadata;
 
 
+class Ad
+{
+
+    public $name;
+
+    public $bid;
+
+    public $group;
+
+}
+
+class Bid
+{
+
+    public $amount;
+
+    public $paymentType;
+
+}
+
+class Group
+{
+
+    public $preview, $members, $type;
+
+}
+
+
+$confCompiler = new \Bumblebee\Configuration\ArrayConfigurationCompiler([
+    "array_to_object" => new \Bumblebee\Configuration\ArrayConfiguration\ArrayToObjectConfigurationCompiler()
+]);
+
+$md = $confCompiler->compile([
+    "ad" => [
+        "tran" => "array_to_object",
+        "class" => "Ad",
+        "settings" => [
+            "name" => "?name",
+            "bid" => [
+                "tran" => "array_to_object",
+                "props" => [
+                    "class" => "Bid",
+                    "settings" => [
+                        "amount" => "?bid",
+                        "paymentType" => "?paymentType"
+                    ]
+                ]
+            ],
+            "group" => [
+                "tran" => "array_to_object",
+                "props" => [
+                    "class" => Group::class,
+                    "settings" => [
+                        "preview" => "?group_preview",
+                        "members" => "?group_members",
+                        "type" => "?group_type"
+                    ]
+                ]
+            ]
+        ]
+    ]
+]);
+
+$transformer = new Transformer(
+    $types = new \Bumblebee\BasicTypeProvider($md),
+    $transformers = new \Bumblebee\LocatorTransformerProvider([
+        "array_to_object" => \Bumblebee\TypeTransformer\ArrayToObjectTransformer::class
+    ]));
+
+$objects = $transformer->transform([
+    "name" => "Qwe",
+    "bid" => 123,
+    "paymentType" => "dindu nothin"
+], "ad");
+
+var_dump($objects);
+
+$compiler = new \Bumblebee\Compiler($types, $transformers);
+echo $genTransformerCode = $compiler->compile("ad");
+
+$genTransformer = eval("return {$genTransformerCode};");
+
+$data = [
+    "name" => "Qwe",
+    "bid" => 123,
+    "paymentType" => "dindu nothin"
+];
+
+$t1 = microtime(true);
+for ($i = 0; $i < 10000; $i++) {
+    $transformer->transform($data, "ad");
+}
+$t1 = microtime(true) - $t1;
+
+$t2 = microtime(true);
+for ($i = 0; $i < 10000; $i++) {
+    $genTransformer($data, $transformer);
+}
+$t2 = microtime(true) - $t2;
+
+echo $t1 * 1000, "\n";
+echo $t2 * 1000, "\n";
+
+__halt_compiler();
+
 /**
  * Lets say we have these domain classes
  */
@@ -170,23 +275,6 @@ $input = [
     "paymentType" => "cpm"
 ];
 
-class Ad
-{
-
-    public $name;
-
-    public $bid;
-
-}
-
-class Bid
-{
-
-    public $amount;
-
-    public $paymentType;
-
-}
 
 $typeProvider = new \Bumblebee\BasicTypeProvider([
     "ad" => new \Bumblebee\Metadata\ArrayToObject\ArrayToObjectMetadata(Ad::class, [], [
