@@ -39,7 +39,8 @@ class Group
 
 
 $confCompiler = new \Bumblebee\Configuration\ArrayConfigurationCompiler([
-    "array_to_object" => new \Bumblebee\Configuration\ArrayConfiguration\ArrayToObjectConfigurationCompiler()
+    "array_to_object" => new \Bumblebee\Configuration\ArrayConfiguration\ArrayToObjectConfigurationCompiler(),
+    "function" => new \Bumblebee\Configuration\ArrayConfiguration\FunctionConfigurationCompiler()
 ]);
 
 $md = $confCompiler->compile([
@@ -47,17 +48,14 @@ $md = $confCompiler->compile([
         "tran" => "array_to_object",
         "class" => "Ad",
         "settings" => [
-            "name" => "?name",
+            "name" => "trim(string(?name))",
             "bid" => [
                 "tran" => "array_to_object",
                 "props" => [
                     "class" => "Bid",
                     "settings" => [
                         "amount" => "?bid",
-                        "paymentType" => "?paymentType"
-                    ]
-                ]
-            ],
+                        "paymentType" => "trim(string(?paymentType))"]]],
             "group" => [
                 "tran" => "array_to_object",
                 "props" => [
@@ -65,22 +63,23 @@ $md = $confCompiler->compile([
                     "settings" => [
                         "preview" => "?group_preview",
                         "members" => "?group_members",
-                        "type" => "?group_type"
-                    ]
-                ]
-            ]
-        ]
-    ]
-]);
+                        "type" => "?group_type"]]]]],
+    "string" => [
+        "tran" => "function",
+        "func" => "strval"],
+    "trim" => [
+        "tran" => "function",
+        "func" => "trim"]]);
 
 $transformer = new Transformer(
     $types = new \Bumblebee\BasicTypeProvider($md),
     $transformers = new \Bumblebee\LocatorTransformerProvider([
-        "array_to_object" => \Bumblebee\TypeTransformer\ArrayToObjectTransformer::class
-    ]));
+        "array_to_object" => \Bumblebee\TypeTransformer\ArrayToObjectTransformer::class,
+        "function" => \Bumblebee\TypeTransformer\FunctionTransformer::class,
+        "chain" => \Bumblebee\TypeTransformer\ChainTransformer::class]));
 
 $objects = $transformer->transform([
-    "name" => "Qwe",
+    "name" => "  Qwe ",
     "bid" => 123,
     "paymentType" => "dindu nothin"
 ], "ad");
@@ -90,13 +89,13 @@ var_dump($objects);
 $compiler = new \Bumblebee\Compiler($types, $transformers);
 echo $genTransformerCode = $compiler->compile("ad");
 
+/** @var \Closure $genTransformer */
 $genTransformer = eval("return {$genTransformerCode};");
 
 $data = [
     "name" => "Qwe",
     "bid" => 123,
-    "paymentType" => "dindu nothin"
-];
+    "paymentType" => "dindu nothin"];
 
 $t1 = microtime(true);
 for ($i = 0; $i < 10000; $i++) {

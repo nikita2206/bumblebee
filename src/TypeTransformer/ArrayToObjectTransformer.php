@@ -17,10 +17,7 @@ use Bumblebee\Transformer;
 class ArrayToObjectTransformer implements CompilableTypeTransformer
 {
     /**
-     * @param mixed $data
-     * @param TypeMetadata $metadata
-     * @param Transformer $transformer
-     * @return mixed
+     * @inheritdoc
      */
     public function transform($data, TypeMetadata $metadata, Transformer $transformer)
     {
@@ -90,9 +87,7 @@ class ArrayToObjectTransformer implements CompilableTypeTransformer
     }
 
     /**
-     * @param ValidationContext $context
-     * @param TypeMetadata $metadata
-     * @return ValidationError[]
+     * @inheritdoc
      */
     public function validateMetadata(ValidationContext $context, TypeMetadata $metadata)
     {
@@ -143,12 +138,7 @@ class ArrayToObjectTransformer implements CompilableTypeTransformer
     }
 
     /**
-     * Compiles transformer for a given metadata
-     *
-     * @param CompilationContext $ctx
-     * @param TypeMetadata $metadata
-     * @param Compiler $compiler
-     * @return void
+     * @inheritdoc
      */
     public function compile(CompilationContext $ctx, TypeMetadata $metadata, Compiler $compiler)
     {
@@ -213,9 +203,7 @@ class ArrayToObjectTransformer implements CompilableTypeTransformer
                 if ($argFrame->getStatements() && ! $arg->isKeyAlwaysSet()) {
                     $frame->addStatement($ctx->ifStmt($ctx->callFunction($ctx->constValue("isset"), [$fetchExp]), $argFrame->getStatements()));
                 } else {
-                    foreach ($argFrame->getStatements() as $stmt) {
-                        $frame->addStatement($stmt);
-                    }
+                    $frame->addStatements($argFrame->getStatements());
                 }
 
                 $argVal = $argFrame->getResult();

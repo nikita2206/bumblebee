@@ -10,7 +10,6 @@ ad:
     #   key: name
     #   type: trim
     bid:
-      key: ""
       tran: array_to_object
       props:
         class: Bid
@@ -24,8 +23,14 @@ ad_to_array:
     bid: bid->amount
     paymentType: bid->paymentType
     created: date_iso(created)
+ads:
+  tran: typed_collection
+  type: ad_to_array
+  class: Doctrine\Common\Collections\ArrayCollection
+  preserveKeys: true
 trim:
-  tran: trim
+  tran: function
+  func: trim
 date_iso:
   tran: datetime_text
   format: 'Y-m-d\TH:i:sO'

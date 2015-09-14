@@ -3,6 +3,7 @@
 namespace Bumblebee\Configuration;
 
 use Bumblebee\Configuration\ArrayConfiguration\TransformerConfigurationCompiler;
+use Bumblebee\Metadata\ChainMetadata;
 use Bumblebee\Metadata\TypeMetadata;
 
 class ArrayConfigurationCompiler
@@ -17,6 +18,11 @@ class ArrayConfigurationCompiler
      * @var array
      */
     protected $deferred;
+
+    /**
+     * @var array
+     */
+    protected $compiled;
 
     /**
      * @var string
@@ -38,7 +44,7 @@ class ArrayConfigurationCompiler
      */
     public function compile(array $configuration)
     {
-        $compiled = [];
+        $this->compiled = [];
 
         do {
             $this->deferred = [];
@@ -51,7 +57,7 @@ class ArrayConfigurationCompiler
                 $transformer = isset($typeDefinition["transformer"]) ? $typeDefinition["transformer"] : $typeDefinition["tran"];
 
                 $this->currentlyCompiling = $typeName;
-                $compiled[$typeName] = $this->getCompiler($transformer)->compile($typeDefinition, $this);
+                $this->compiled[$typeName] = $this->getCompiler($transformer)->compile($typeDefinition, $this);
 
                 if (isset($this->deferred[$typeName])) {
                     throw new \RuntimeException();
@@ -59,12 +65,20 @@ class ArrayConfigurationCompiler
             }
         } while ($configuration = $this->deferred);
 
+        $compiled = $this->compiled;
+        $this->compiled = null;
         $this->deferred = null;
         $this->currentlyCompiling = null;
 
         return $compiled;
     }
 
+    /**
+     * @param string $name
+     * @param string $tran
+     * @param array $props
+     * @return string
+     */
     public function defer($name, $tran, $props)
     {
         $name = "__" . $this->currentlyCompiling . "_" . $name;
@@ -74,6 +88,24 @@ class ArrayConfigurationCompiler
         }
 
         $this->deferred[$name] = $props + ["tran" => $tran];
+
+        return $name;
+    }
+
+    /**
+     * Returns type name for chain of given types
+     *
+     * @param array $types
+     * @return string
+     */
+    public function chain(array $types)
+    {
+        $name = "__chain_" . implode(".", $types);
+
+        if (isset($this->compiled[$name]) || isset($this->deferred[$name])) {
+            return $name;
+        }
+        $this->compiled[$name] = new ChainMetadata($types);
 
         return $name;
     }

@@ -16,10 +16,7 @@ use Bumblebee\Transformer;
 class TypedCollectionTransformer implements CompilableTypeTransformer
 {
     /**
-     * @param mixed $data
-     * @param TypeMetadata $metadata
-     * @param Transformer $transformer
-     * @return mixed
+     * @inheritdoc
      */
     public function transform($data, TypeMetadata $metadata, Transformer $transformer)
     {
@@ -48,9 +45,7 @@ class TypedCollectionTransformer implements CompilableTypeTransformer
     }
 
     /**
-     * @param ValidationContext $context
-     * @param TypeMetadata $metadata
-     * @return ValidationError[]
+     * @inheritdoc
      */
     public function validateMetadata(ValidationContext $context, TypeMetadata $metadata)
     {
@@ -66,9 +61,7 @@ class TypedCollectionTransformer implements CompilableTypeTransformer
     }
 
     /**
-     * @param CompilationContext $ctx
-     * @param TypeMetadata $metadata
-     * @param Compiler $compiler
+     * @inheritdoc
      */
     public function compile(CompilationContext $ctx, TypeMetadata $metadata, Compiler $compiler)
     {

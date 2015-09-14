@@ -4,18 +4,20 @@ namespace Bumblebee\Configuration\ArrayConfiguration;
 
 trait ArrayConfigurationHelper
 {
-
     /**
      * @param string $value
-     * @return array(null|string $type, string $remainingKey)
+     * @return array(string[] $type, string $remainingKey)
      */
     protected function extractType($value)
     {
-        if (preg_match('!^(\w+?)\\((.+)\\)$!', trim($value), $match)) {
-            return [$match[1], $match[2]];
+        $value = trim($value);
+        $typeChain = [];
+
+        while (preg_match('!^([\w-]+?)\\((.*)\\)$!', $value, $match)) {
+            $typeChain[] = $match[1];
+            $value = $match[2];
         }
 
-        return [null, $value];
+        return [array_reverse($typeChain), $value];
     }
-
 }

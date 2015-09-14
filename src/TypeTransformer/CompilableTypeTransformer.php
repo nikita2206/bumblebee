@@ -8,7 +8,6 @@ use Bumblebee\Metadata\TypeMetadata;
 
 interface CompilableTypeTransformer extends TypeTransformer
 {
-
     /**
      * Compiles transformer for a given metadata
      *
@@ -18,5 +17,4 @@ interface CompilableTypeTransformer extends TypeTransformer
      * @return void
      */
     public function compile(CompilationContext $ctx, TypeMetadata $metadata, Compiler $compiler);
-
 }

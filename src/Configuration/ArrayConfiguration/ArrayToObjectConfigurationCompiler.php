@@ -10,7 +10,6 @@ use Bumblebee\Metadata\TypeMetadata;
 
 class ArrayToObjectConfigurationCompiler implements TransformerConfigurationCompiler
 {
-
     use ArrayConfigurationHelper;
 
     /**
@@ -61,7 +60,7 @@ class ArrayToObjectConfigurationCompiler implements TransformerConfigurationComp
 
     protected function compileArg($name, $properties, Compiler $compiler)
     {
-        $type = null;
+        $type = [];
         $key = null;
         $assumeAlwaysSet = true;
         $fallbackValue = null;
@@ -79,8 +78,8 @@ class ArrayToObjectConfigurationCompiler implements TransformerConfigurationComp
 
                 if (isset($properties["type"]) && $type !== null) {
                     throw new \Exception("Type is set twice");
-                } else {
-                    $type = $properties["type"];
+                } elseif (isset($properties["type"])) {
+                    $type = (array)$properties["type"];
                 }
 
                 if (isset($properties["check_isset"])) {
@@ -92,20 +91,26 @@ class ArrayToObjectConfigurationCompiler implements TransformerConfigurationComp
                 }
 
                 if (isset($properties["tran"])) {
-                    $type = $compiler->defer($name . "_" . implode(".", $key), $properties["tran"],
-                        isset($properties["props"]) ? $properties["props"] : []);
+                    $type = [$compiler->defer($name . "_" . implode(".", $key), $properties["tran"],
+                        isset($properties["props"]) ? $properties["props"] : [])];
                 }
             } else {
                 $key = $properties;
             }
         } else {
-            if ($properties[0] === "?") {
-                $properties = substr($properties, 1);
+            list($type, $key) = $this->extractType($properties);
+            if ($key[0] === "?") {
+                $key = substr($key, 1);
                 $assumeAlwaysSet = false;
             }
 
-            list($type, $key) = $this->extractType($properties);
             $key = $this->expandKey($key);
+        }
+
+        if (count($type) > 1) {
+            $type = $compiler->chain($type);
+        } else {
+            $type = reset($type) ?: null;
         }
 
         return new ArrayToObjectArgumentMetadata($type, $key, $assumeAlwaysSet, $fallbackValue);

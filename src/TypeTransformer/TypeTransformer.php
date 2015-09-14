@@ -7,9 +7,6 @@ use Bumblebee\Metadata\ValidationContext;
 use Bumblebee\Metadata\ValidationError;
 use Bumblebee\Transformer;
 
-/**
- * TODO: Next step is CompilableTypeTransformer
- */
 interface TypeTransformer
 {
 

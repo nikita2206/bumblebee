@@ -28,7 +28,12 @@ class ObjectArrayConfigurationCompiler implements TransformerConfigurationCompil
         foreach ($configuration["elements"] as $elName => $elProps) {
             list($type, $accessors) = $this->extractType($elProps);
             $accessors = $this->buildAccessors($accessors);
-            $fields[] = new ObjectArrayElementMetadata($type, $elName, $accessors);
+
+            if (count($type) > 1) {
+                $type = [$compiler->chain($type)];
+            }
+
+            $fields[] = new ObjectArrayElementMetadata(reset($type) ?: null, $elName, $accessors);
         }
 
         return new ObjectArrayMetadata($fields);

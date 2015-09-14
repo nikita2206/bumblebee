@@ -71,6 +71,16 @@ class CompilationFrame
     }
 
     /**
+     * @param Statement[]|Expression[] $statements
+     */
+    public function addStatements($statements)
+    {
+        foreach ($statements as $stmt) {
+            $this->addStatement($stmt);
+        }
+    }
+
+    /**
      * @return Expression
      */
     public function getResult()
