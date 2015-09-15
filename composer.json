@@ -2,7 +2,7 @@
     "name": "bumblebee/bumblebee",
     "homepage": "https://github.com/nikita2206/bumblebee",
     "description": "A data transformer library for PHP",
-    "keywords": ["data", "transformer", "mapper"],
+    "keywords": ["data", "transformer", "mapper", "marshalling"],
     "license": "MIT",
     "require-dev": {
         "phpunit/phpunit": "~4.8@dev"

@@ -6,7 +6,7 @@ use Bumblebee\Exception\InvalidTypeException;
 use Bumblebee\Metadata\ValidationContext;
 use Bumblebee\Metadata\ValidationError;
 
-class Transformer
+class Transformer implements TransformerInterface
 {
 
     /**
