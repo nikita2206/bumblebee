@@ -81,7 +81,7 @@ $transformer = new Transformer(
 $objects = $transformer->transform([
     "name" => "  Qwe ",
     "bid" => 123,
-    "paymentType" => "dindu nothin"
+    "paymentType" => "asd"
 ], "ad");
 
 var_dump($objects);
@@ -95,7 +95,7 @@ $genTransformer = eval("return {$genTransformerCode};");
 $data = [
     "name" => "Qwe",
     "bid" => 123,
-    "paymentType" => "dindu nothin"];
+    "paymentType" => "asd"];
 
 $t1 = microtime(true);
 for ($i = 0; $i < 10000; $i++) {

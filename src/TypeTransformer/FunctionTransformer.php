@@ -8,14 +8,14 @@ use Bumblebee\Metadata\FunctionMetadata;
 use Bumblebee\Metadata\TypeMetadata;
 use Bumblebee\Metadata\ValidationContext;
 use Bumblebee\Metadata\ValidationError;
-use Bumblebee\Transformer;
+use Bumblebee\TransformerInterface;
 
 class FunctionTransformer implements CompilableTypeTransformer
 {
     /**
      * @inheritdoc
      */
-    public function transform($data, TypeMetadata $metadata, Transformer $transformer)
+    public function transform($data, TypeMetadata $metadata, TransformerInterface $transformer)
     {
         if ( ! $metadata instanceof FunctionMetadata) {
             throw new \InvalidArgumentException();

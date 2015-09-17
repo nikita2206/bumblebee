@@ -11,7 +11,7 @@ use Bumblebee\Metadata\ObjectArray\ObjectArrayMetadata;
 use Bumblebee\Metadata\TypeMetadata;
 use Bumblebee\Metadata\ValidationContext;
 use Bumblebee\Metadata\ValidationError;
-use Bumblebee\Transformer;
+use Bumblebee\TransformerInterface;
 
 class ObjectArrayTransformer implements CompilableTypeTransformer
 {
@@ -19,7 +19,7 @@ class ObjectArrayTransformer implements CompilableTypeTransformer
     /**
      * @inheritdoc
      */
-    public function transform($data, TypeMetadata $metadata, Transformer $transformer)
+    public function transform($data, TypeMetadata $metadata, TransformerInterface $transformer)
     {
         if ( ! $metadata instanceof ObjectArrayMetadata) {
             throw new \InvalidArgumentException();

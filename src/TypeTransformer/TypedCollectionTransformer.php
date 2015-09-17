@@ -11,14 +11,14 @@ use Bumblebee\Metadata\TypedCollectionMetadata;
 use Bumblebee\Metadata\TypeMetadata;
 use Bumblebee\Metadata\ValidationContext;
 use Bumblebee\Metadata\ValidationError;
-use Bumblebee\Transformer;
+use Bumblebee\TransformerInterface;
 
 class TypedCollectionTransformer implements CompilableTypeTransformer
 {
     /**
      * @inheritdoc
      */
-    public function transform($data, TypeMetadata $metadata, Transformer $transformer)
+    public function transform($data, TypeMetadata $metadata, TransformerInterface $transformer)
     {
         if ( ! $metadata instanceof TypedCollectionMetadata) {
             throw new \InvalidArgumentException();

@@ -12,14 +12,14 @@ use Bumblebee\Metadata\ArrayToObject\ArrayToObjectMetadata;
 use Bumblebee\Metadata\TypeMetadata;
 use Bumblebee\Metadata\ValidationContext;
 use Bumblebee\Metadata\ValidationError;
-use Bumblebee\Transformer;
+use Bumblebee\TransformerInterface;
 
 class ArrayToObjectTransformer implements CompilableTypeTransformer
 {
     /**
      * @inheritdoc
      */
-    public function transform($data, TypeMetadata $metadata, Transformer $transformer)
+    public function transform($data, TypeMetadata $metadata, TransformerInterface $transformer)
     {
         if ( ! $metadata instanceof ArrayToObjectMetadata) {
             throw new \InvalidArgumentException();
@@ -52,10 +52,10 @@ class ArrayToObjectTransformer implements CompilableTypeTransformer
     /**
      * @param array|\ArrayAccess $data
      * @param ArrayToObjectArgumentMetadata[] $argsMetadata
-     * @param Transformer $transformer
+     * @param TransformerInterface $transformer
      * @return array
      */
-    protected function fetchArguments($data, $argsMetadata, Transformer $transformer)
+    protected function fetchArguments($data, $argsMetadata, TransformerInterface $transformer)
     {
         $args = [];
 

@@ -36,8 +36,8 @@ class ArrayToObjectConfigurationCompiler implements TransformerConfigurationComp
             }
         }
         if (isset($configuration["constructor"])) {
-            foreach ($configuration["constructor"] as $arg) {
-                $ctorArgs[] = $this->compileArg("ctor", $arg, $compiler);
+            foreach ($configuration["constructor"] as $pos => $arg) {
+                $ctorArgs[] = $this->compileArg("ctor", $pos, $arg, $compiler);
             }
         }
 
@@ -48,17 +48,17 @@ class ArrayToObjectConfigurationCompiler implements TransformerConfigurationComp
     {
         $args = [];
         if ($isMethod) {
-            foreach ($properties as $props) {
-                $args[] = $this->compileArg($name, $props, $compiler);
+            foreach ($properties as $pos => $props) {
+                $args[] = $this->compileArg($name, $pos, $props, $compiler);
             }
         } else {
-            $args[] = $this->compileArg($name, $properties, $compiler);
+            $args[] = $this->compileArg($name, 0, $properties, $compiler);
         }
 
         return new ArrayToObjectSettingMetadata($name, $args, $isMethod);
     }
 
-    protected function compileArg($name, $properties, Compiler $compiler)
+    protected function compileArg($methName, $argPos, $properties, Compiler $compiler)
     {
         $type = [];
         $key = null;
@@ -91,7 +91,7 @@ class ArrayToObjectConfigurationCompiler implements TransformerConfigurationComp
                 }
 
                 if (isset($properties["tran"])) {
-                    $type = [$compiler->defer($name . "_" . implode(".", $key), $properties["tran"],
+                    $type = [$compiler->defer("{$methName}_{$argPos}_" . implode(".", $key), $properties["tran"],
                         isset($properties["props"]) ? $properties["props"] : [])];
                 }
             } else {

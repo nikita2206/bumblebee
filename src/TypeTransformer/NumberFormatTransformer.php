@@ -8,14 +8,14 @@ use Bumblebee\Metadata\NumberFormatMetadata;
 use Bumblebee\Metadata\TypeMetadata;
 use Bumblebee\Metadata\ValidationContext;
 use Bumblebee\Metadata\ValidationError;
-use Bumblebee\Transformer;
+use Bumblebee\TransformerInterface;
 
 class NumberFormatTransformer implements CompilableTypeTransformer
 {
     /**
      * @inheritdoc
      */
-    public function transform($data, TypeMetadata $metadata, Transformer $transformer)
+    public function transform($data, TypeMetadata $metadata, TransformerInterface $transformer)
     {
         if ( ! $metadata instanceof NumberFormatMetadata) {
             throw new \InvalidArgumentException();

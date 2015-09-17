@@ -11,6 +11,7 @@ use Bumblebee\TypeTransformer\CompilableTypeTransformer;
 use Bumblebee\Compilation\CompilationContext;
 use Bumblebee\Compiler;
 use Bumblebee\Transformer;
+use Bumblebee\TransformerInterface;
 use Bumblebee\Metadata\ValidationContext;
 use Bumblebee\Metadata\ValidationError;
 use Bumblebee\Metadata\ObjectArray\ObjectArrayMetadata;
@@ -44,7 +45,7 @@ class TrimMetadata extends TypeMetadata
 
 class TrimTransformer implements CompilableTypeTransformer
 {
-    public function transform($data, TypeMetadata $metadata, Transformer $transformer)
+    public function transform($data, TypeMetadata $metadata, TransformerInterface $transformer)
     {
         if ( ! $metadata instanceof TrimMetadata) {
             throw new \InvalidArgumentException();

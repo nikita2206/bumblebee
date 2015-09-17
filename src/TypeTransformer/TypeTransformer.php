@@ -5,7 +5,7 @@ namespace Bumblebee\TypeTransformer;
 use Bumblebee\Metadata\TypeMetadata;
 use Bumblebee\Metadata\ValidationContext;
 use Bumblebee\Metadata\ValidationError;
-use Bumblebee\Transformer;
+use Bumblebee\TransformerInterface;
 
 interface TypeTransformer
 {
@@ -13,10 +13,10 @@ interface TypeTransformer
     /**
      * @param mixed $data
      * @param TypeMetadata $metadata
-     * @param Transformer $transformer
+     * @param TransformerInterface|Transformer $transformer
      * @return mixed
      */
-    public function transform($data, TypeMetadata $metadata, Transformer $transformer);
+    public function transform($data, TypeMetadata $metadata, TransformerInterface $transformer);
 
     /**
      * @param ValidationContext $context
