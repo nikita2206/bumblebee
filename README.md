@@ -51,9 +51,9 @@ There's a better way to transform your data though, it's through the use of `Bum
    You can look at `Bumblebee\TypeTransformer\ArrayToObjectTransformer#transform()` to see
    how much stuff happens when you do it. And for each field it will call back into
    `Bumblebee\Transformer` for it to call `NumberTransformer#transform`. This takes quite
-   a lot of resources and if we have a big amount records to process like this it will be noticeable,
-   if you have ever used JMSSerializer you will understand me.
-   Now if we compile it we'll get a function that would something like the following:
+   a lot of resources and if you have some big amount of records to process it can get quite slow,
+   you can take JMSSerializer as an example.
+   Now if we compile it we'll get a function that would look something like this:
 
 ```php
 function ($input, Bumblebee\Transformer $transformer) {
@@ -68,15 +68,15 @@ function ($input, Bumblebee\Transformer $transformer) {
 Customizing transformers
 ------------------------
 
-You can customize or write new transformers from scratch. If your new transformer
-requires any new rules you'll need to create new Metadata class for it,
+You can customize existing transformers or write new ones from scratch. If your new transformer
+requires any rules for it to work you'll need to create new Metadata class for it,
 it has to extend `Bumblebee\Metadata\TypeMetadata`. Then of course you'll need
 to create TypeTransformer class, it has to implement
 `Bumblebee\TypeTransformer\TypeTransformer` interface. However if you want to create
 compilable TypeTransformer then you'd need to implement
 `Bumblebee\TypeTransformer\CompilableTypeTransformer`. For the reference on
-how to write compilable transformers you can look in examples/ directory
-or you can look at some already written transformers in src/TypeTransformer/.
+how to write compilable transformers you can look at `examples/` directory
+or you can look at some already written transformers in `src/TypeTransformer/`.
 And finally you'll need to write configuration compilers if you use array or xml
 configuration.
 
@@ -88,7 +88,7 @@ there's always a chance for a mistake. However a scope of possible mistakes is n
 here because transformers are well-tested with unit and integration tests, and because
 things that can be validated are validated at build-time.
 Also because Bumblebee has a declarative syntax for transformation rules which can
-be checked and validated if you ask it to so
+be checked and validated if you ask it to, so that
 you don't run into strange bugs. And finally Bumblebee transformers can be compiled
 according to your transformation rules as optimal as you would write it.
 But if you would be writing transformers manually you would probably go for readability
