@@ -13,7 +13,7 @@ trait ArrayConfigurationHelper
         $value = trim($value);
         $typeChain = [];
 
-        while (preg_match('!^([\w-]+?)\\((.*)\\)$!', $value, $match)) {
+        while (preg_match('!^([\w-]+?)\\((.+)\\)$!', $value, $match)) {
             $typeChain[] = $match[1];
             $value = $match[2];
         }
