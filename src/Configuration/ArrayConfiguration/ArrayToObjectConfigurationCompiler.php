@@ -3,6 +3,7 @@
 namespace Bumblebee\Configuration\ArrayConfiguration;
 
 use Bumblebee\Configuration\ArrayConfigurationCompiler as Compiler;
+use Bumblebee\Exception\ConfigurationCompilationException;
 use Bumblebee\Metadata\ArrayToObject\ArrayToObjectArgumentMetadata;
 use Bumblebee\Metadata\ArrayToObject\ArrayToObjectMetadata;
 use Bumblebee\Metadata\ArrayToObject\ArrayToObjectSettingMetadata;
@@ -21,7 +22,7 @@ class ArrayToObjectConfigurationCompiler implements TransformerConfigurationComp
     public function compile(array $configuration, Compiler $compiler)
     {
         if ( ! isset($configuration["class"]) || ! is_string($configuration["class"])) {
-            throw new \Exception("class attribute is required");
+            throw new ConfigurationCompilationException("Property 'class' is required to be string");
         }
 
         $ctorArgs = [];
@@ -37,7 +38,7 @@ class ArrayToObjectConfigurationCompiler implements TransformerConfigurationComp
         }
         if (isset($configuration["constructor"])) {
             foreach ($configuration["constructor"] as $pos => $arg) {
-                $ctorArgs[] = $this->compileArg("ctor", $pos, $arg, $compiler);
+                $ctorArgs[] = $this->compileArg("__construct", $pos, $arg, $compiler);
             }
         }
 
@@ -49,10 +50,23 @@ class ArrayToObjectConfigurationCompiler implements TransformerConfigurationComp
         $args = [];
         if ($isMethod) {
             foreach ($properties as $pos => $props) {
-                $args[] = $this->compileArg($name, $pos, $props, $compiler);
+                try {
+
+                    $args[] = $this->compileArg($name, $pos, $props, $compiler);
+
+                } catch (ConfigurationCompilationException $e) {
+                    throw new ConfigurationCompilationException($e->getMessage() . " in ->{$name}(), " .
+                        "argument #{$pos}", $e);
+                }
             }
         } else {
-            $args[] = $this->compileArg($name, 0, $properties, $compiler);
+            try {
+
+                $args[] = $this->compileArg($name, 0, $properties, $compiler);
+
+            } catch (ConfigurationCompilationException $e) {
+                throw new ConfigurationCompilationException($e->getMessage() . " in ->{$name}", $e);
+            }
         }
 
         return new ArrayToObjectSettingMetadata($name, $args, $isMethod);
@@ -76,8 +90,9 @@ class ArrayToObjectConfigurationCompiler implements TransformerConfigurationComp
                     $key = $this->expandKey($key);
                 }
 
-                if (isset($properties["type"]) && $type !== null) {
-                    throw new \Exception("Type is set twice");
+                if (isset($properties["type"]) && $type !== null && $type !== []) {
+                    throw new ConfigurationCompilationException("Property 'type' is declared twice: " .
+                        "first time in {$properties["key"]}, second time in 'type' attribute");
                 } elseif (isset($properties["type"])) {
                     $type = (array)$properties["type"];
                 }
@@ -134,13 +149,21 @@ class ArrayToObjectConfigurationCompiler implements TransformerConfigurationComp
             $expanded = [substr($key, 0, $pos)];
         }
 
+        if ($pos + 1 === strlen($key)) {
+            throw new ConfigurationCompilationException('Expected "]", got end of the string');
+        }
+
         while ($pos + 1 < strlen($key)) {
             if ($key[$pos] === "[") {
                 $newPos = strpos($key, "]", $pos);
 
                 if ($newPos === false) {
-                    throw new \Exception('Expected "]", got end of the string');
+                    throw new ConfigurationCompilationException('Expected "]", got end of the string');
                 } else {
+                    if ($pos + 1 === $newPos) {
+                        throw new ConfigurationCompilationException("Expected non-empty string literal, got \"\"");
+                    }
+
                     $expanded[] = substr($key, $pos + 1, $newPos - $pos - 1);
                     $pos = $newPos;
                 }
@@ -148,7 +171,7 @@ class ArrayToObjectConfigurationCompiler implements TransformerConfigurationComp
                 $pos++;
 
                 if ($key[$pos] !== "[") {
-                    throw new \Exception("Expected \"[\", got \"{$key[$pos]}\"");
+                    throw new ConfigurationCompilationException("Expected \"[\", got \"{$key[$pos]}\"");
                 }
             }
         }

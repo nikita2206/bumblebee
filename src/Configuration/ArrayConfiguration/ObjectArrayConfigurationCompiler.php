@@ -3,6 +3,7 @@
 namespace Bumblebee\Configuration\ArrayConfiguration;
 
 use Bumblebee\Configuration\ArrayConfigurationCompiler;
+use Bumblebee\Exception\ConfigurationCompilationException;
 use Bumblebee\Metadata\ObjectArray\ObjectArrayAccessorMetadata;
 use Bumblebee\Metadata\ObjectArray\ObjectArrayElementMetadata;
 use Bumblebee\Metadata\ObjectArray\ObjectArrayMetadata;
@@ -20,12 +21,13 @@ class ObjectArrayConfigurationCompiler implements TransformerConfigurationCompil
      */
     public function compile(array $configuration, ArrayConfigurationCompiler $compiler)
     {
-        if (!isset($configuration["elements"]) || !is_array($configuration["elements"])) {
-            throw new \Exception();
+        $elems = isset($configuration["elements"]) ? $configuration["elements"] : [];
+        if (!is_array($elems)) {
+            throw new ConfigurationCompilationException("Property 'elements' is required to be an array");
         }
 
         $fields = [];
-        foreach ($configuration["elements"] as $elName => $elProps) {
+        foreach ($elems as $elName => $elProps) {
             list($type, $accessors) = $this->extractType($elProps);
             $accessors = $this->buildAccessors($accessors);
 
@@ -52,5 +54,4 @@ class ObjectArrayConfigurationCompiler implements TransformerConfigurationCompil
             );
         }, explode("->", $accessorsExpression));
     }
-
 }

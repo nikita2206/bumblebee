@@ -3,6 +3,7 @@
 namespace Bumblebee\Configuration;
 
 use Bumblebee\Configuration\ArrayConfiguration\TransformerConfigurationCompiler;
+use Bumblebee\Exception\ConfigurationCompilationException;
 use Bumblebee\Metadata\ChainMetadata;
 use Bumblebee\Metadata\TypeMetadata;
 
@@ -20,7 +21,7 @@ class ArrayConfigurationCompiler
     protected $deferred;
 
     /**
-     * @var array
+     * @var TypeMetadata[]
      */
     protected $compiled;
 
@@ -28,6 +29,11 @@ class ArrayConfigurationCompiler
      * @var string
      */
     protected $currentlyCompiling;
+
+    /**
+     * @var string[]
+     */
+    protected $deferredToRootMap;
 
     /**
      * @param TransformerConfigurationCompiler[] $compilers
@@ -40,35 +46,48 @@ class ArrayConfigurationCompiler
     /**
      * @param array $configuration
      * @return TypeMetadata[]
-     * @throws \Exception
+     * @throws ConfigurationCompilationException
      */
     public function compile(array $configuration)
     {
         $this->compiled = [];
+        $this->deferredToRootMap = [];
+        $root = true;
 
         do {
             $this->deferred = [];
 
             foreach ($configuration as $typeName => $typeDefinition) {
                 if (!isset($typeDefinition["tran"]) && !isset($typeDefinition["transformer"])) {
-                    throw new \Exception();
+                    $erroneousType = $root ? $typeName : $this->deferredToRootMap[$typeName];
+                    throw new ConfigurationCompilationException("In type '{$erroneousType}': Property 'tran' or 'transformer' is required");
                 }
 
                 $transformer = isset($typeDefinition["transformer"]) ? $typeDefinition["transformer"] : $typeDefinition["tran"];
 
-                $this->currentlyCompiling = $typeName;
-                $this->compiled[$typeName] = $this->getCompiler($transformer)->compile($typeDefinition, $this);
+                $this->currentlyCompiling  = $typeName;
+
+                try {
+                    $this->compiled[$typeName] = $this->getCompiler($transformer)->compile($typeDefinition, $this);
+                } catch (ConfigurationCompilationException $e) {
+                    $erroneousType = $root ? $typeName : $this->deferredToRootMap[$typeName];
+                    throw new ConfigurationCompilationException("In type '{$erroneousType}': " . $e->getMessage(), $e);
+                }
 
                 if (isset($this->deferred[$typeName])) {
-                    throw new \RuntimeException();
+                    throw new ConfigurationCompilationException("Type '{$typeName}' was deferred for compilation" .
+                        " during compilation of itself (recursive type)");
                 }
             }
+
+            $root = false;
         } while ($configuration = $this->deferred);
 
         $compiled = $this->compiled;
         $this->compiled = null;
         $this->deferred = null;
         $this->currentlyCompiling = null;
+        $this->deferredToRootMap  = null;
 
         return $compiled;
     }
@@ -78,16 +97,19 @@ class ArrayConfigurationCompiler
      * @param string $tran
      * @param array $props
      * @return string
+     * @throws ConfigurationCompilationException
      */
     public function defer($name, $tran, $props)
     {
-        $name = "__" . $this->currentlyCompiling . "_" . $name;
+        $name  = "__" . $this->currentlyCompiling . "_" . $name;
+        $props = $props + ["tran" => $tran];
 
-        if (isset($this->deferred[$name])) {
-            throw new \RuntimeException();
+        if (isset($this->deferred[$name]) && $this->deferred[$name] !== $props) {
+            throw new ConfigurationCompilationException("Type '{$name}' was deferred for compilation twice");
         }
 
-        $this->deferred[$name] = $props + ["tran" => $tran];
+        $this->deferred[$name] = $props;
+        $this->deferredToRootMap[$name] = $this->currentlyCompiling;
 
         return $name;
     }
@@ -113,15 +135,14 @@ class ArrayConfigurationCompiler
     /**
      * @param string $name
      * @return TransformerConfigurationCompiler
-     * @throws \RuntimeException
+     * @throws ConfigurationCompilationException
      */
     protected function getCompiler($name)
     {
         if ( ! isset($this->compilers[$name])) {
-            throw new \RuntimeException("Compiler \"{$name}\" doesn't exist");
+            throw new ConfigurationCompilationException("Compiler for '{$name}' doesn't exist");
         }
 
         return $this->compilers[$name];
     }
-
 }
