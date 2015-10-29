@@ -27,4 +27,52 @@ trait ArrayConfigurationHelper
 
         return [array_reverse($typeChain), trim($value)];
     }
+
+    /**
+     * Expands string key from format "foo[bar][poo]" to array("foo", "bar", "poo")
+     *
+     * @param string $key
+     * @return array
+     * @throws \Exception
+     */
+    protected function expandKey($key)
+    {
+        $key = trim($key);
+        $pos = strpos($key, "[");
+
+        if ($pos === false) {
+            return [$key];
+        } else {
+            $expanded = [substr($key, 0, $pos)];
+        }
+
+        if ($pos + 1 === strlen($key)) {
+            throw new ConfigurationCompilationException('Expected "]", got end of the string');
+        }
+
+        while ($pos + 1 < strlen($key)) {
+            if ($key[$pos] === "[") {
+                $newPos = strpos($key, "]", $pos);
+
+                if ($newPos === false) {
+                    throw new ConfigurationCompilationException('Expected "]", got end of the string');
+                } else {
+                    if ($pos + 1 === $newPos) {
+                        throw new ConfigurationCompilationException("Expected non-empty string literal, got \"\"");
+                    }
+
+                    $expanded[] = substr($key, $pos + 1, $newPos - $pos - 1);
+                    $pos = $newPos;
+                }
+            } elseif ($key[$pos] === "]") {
+                $pos++;
+
+                if ($key[$pos] !== "[") {
+                    throw new ConfigurationCompilationException("Expected \"[\", got \"{$key[$pos]}\"");
+                }
+            }
+        }
+
+        return $expanded;
+    }
 }
