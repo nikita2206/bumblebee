@@ -17,7 +17,7 @@ trait ArrayConfigurationHelper
         $typeChain = [];
 
         while (preg_match('!^([\w-]+?)\\((.+)\\)$!', $value, $match)) {
-            if (substr($match[2], -1) === "(") {
+            if (substr(rtrim($match[2]), -1) === "(") {
                 break;
             }
 
@@ -25,6 +25,6 @@ trait ArrayConfigurationHelper
             $value = $match[2];
         }
 
-        return [array_reverse($typeChain), $value];
+        return [array_reverse($typeChain), trim($value)];
     }
 }

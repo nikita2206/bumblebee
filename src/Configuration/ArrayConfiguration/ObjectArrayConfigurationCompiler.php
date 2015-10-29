@@ -29,7 +29,7 @@ class ObjectArrayConfigurationCompiler implements TransformerConfigurationCompil
         $fields = [];
         foreach ($elems as $elName => $elProps) {
             list($type, $accessors) = $this->extractType($elProps);
-            $accessors = $this->buildAccessors($accessors);
+            $accessors = $accessors === '$this' ? [] : $this->buildAccessors($accessors);
 
             if (count($type) > 1) {
                 $type = [$compiler->chain($type)];
