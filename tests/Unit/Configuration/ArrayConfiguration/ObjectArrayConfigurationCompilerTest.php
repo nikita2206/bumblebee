@@ -3,7 +3,6 @@
 namespace Unit\Configuration\ArrayConfiguration;
 
 use Bumblebee\Configuration\ArrayConfiguration\ObjectArrayConfigurationCompiler;
-use Bumblebee\Configuration\ArrayConfigurationCompiler;
 use Bumblebee\Metadata\ObjectArray\ObjectArrayAccessorMetadata;
 use Bumblebee\Metadata\ObjectArray\ObjectArrayElementMetadata;
 use Bumblebee\Metadata\ObjectArray\ObjectArrayMetadata;
@@ -13,7 +12,7 @@ class ObjectArrayConfigurationCompilerTest extends \PHPUnit_Framework_TestCase
     public function testCommonCase()
     {
         $oaCompiler = new ObjectArrayConfigurationCompiler();
-        $compiler = $this->getMock(ArrayConfigurationCompiler::class, ["chain"], [], "", false);
+        $compiler = $this->getMock('Bumblebee\Configuration\ArrayConfigurationCompiler', ["chain"], [], "", false);
         $compiler->expects($this->once())->method("chain")->with(["typeBar", "typeFoo"])
             ->will($this->returnValue("chainedFooBar"));
 
