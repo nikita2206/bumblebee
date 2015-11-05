@@ -31,9 +31,22 @@ class TypedCollectionTransformer implements CompilableTypeTransformer
         $className = $metadata->getCollectionClassName();
         $col = $metadata->shouldTransformIntoArray() ? [] : new $className;
 
-        if ($metadata->shouldPreserveKeys()) {
+        if ($metadata->getKeyType()) {
+            $keyType = $metadata->getKeyType();
+            $applyKeyType = function ($k) use ($transformer, $keyType) {
+                return $transformer->transform($k, $keyType);
+            };
+        } else {
+            $applyKeyType = function ($k) { return $k; };
+        }
+
+        if ($metadata->keysGeneratedBy() === TypedCollectionMetadata::KEY_PRESERVE) {
             foreach ($data as $k => $v) {
-                $col[$k] = $metadata->getChildrenType() ? $transformer->transform($v, $metadata->getChildrenType()) : $v;
+                $col[$applyKeyType($k)] = $metadata->getChildrenType() ? $transformer->transform($v, $metadata->getChildrenType()) : $v;
+            }
+        } elseif ($metadata->keysGeneratedBy() === TypedCollectionMetadata::KEY_FROM_VALUE) {
+            foreach ($data as $k => $v) {
+                $col[$applyKeyType($v)] = $metadata->getChildrenType() ? $transformer->transform($v, $metadata->getChildrenType()) : $v;
             }
         } else {
             foreach ($data as $v) {
@@ -57,7 +70,22 @@ class TypedCollectionTransformer implements CompilableTypeTransformer
             $context->validateLater($metadata->getChildrenType(), $context->getCurrentlyValidatingType());
         }
 
-        return [];
+        $errors = [];
+        if ($metadata->getKeyType()) {
+            $context->validateLater($metadata->getKeyType(), $context->getCurrentlyValidatingType());
+
+            if ($metadata->keysGeneratedBy() === TypedCollectionMetadata::KEY_INCREMENTING) {
+                $errors[] = new ValidationError("'keyType' is not applied with 'keysGeneratedBy' = KEY_INCREMENTING");
+            }
+        }
+
+        $keyGenerationTypes = [TypedCollectionMetadata::KEY_INCREMENTING, TypedCollectionMetadata::KEY_FROM_VALUE,
+            TypedCollectionMetadata::KEY_PRESERVE];
+        if ( ! in_array($metadata->keysGeneratedBy(), $keyGenerationTypes, true)) {
+            $errors[] = new ValidationError("'keysGeneratedBy' has unexpected value '{$metadata->keysGeneratedBy()}'");
+        }
+
+        return $errors;
     }
 
     /**
@@ -78,11 +106,9 @@ class TypedCollectionTransformer implements CompilableTypeTransformer
         }
         $frame->addStatement($ctx->assignVariable($colVar, $colVal));
 
-        $keyVar = null;
-        if ($metadata->shouldPreserveKeys()) {
-            $keyVar = $ctx->createFreeVariable("{$frame->getType()}_key");
-        }
-        $valVar = $ctx->createFreeVariable("{$frame->getType()}_val");
+        $resultValVar = $valVar = $ctx->createFreeVariable("{$frame->getType()}_val");
+        $keyVar = $metadata->keysGeneratedBy() === TypedCollectionMetadata::KEY_PRESERVE ?
+            $ctx->createFreeVariable("{$frame->getType()}_key") : null;
 
         $foreach = $ctx->foreachStmt($frame->getInputData(),
             new FunctionArgument($valVar->getName()), $keyVar ? new FunctionArgument($keyVar->getName()) : null);
@@ -91,17 +117,33 @@ class TypedCollectionTransformer implements CompilableTypeTransformer
             $ctx->pushFrame(new CompilationFrame($valVar, $metadata->getChildrenType()));
             $compiler->_compileType($ctx, $metadata->getChildrenType());
             $childFrame = $ctx->popFrame();
-            $valVar = $childFrame->getResult();
+            $resultValVar = $childFrame->getResult();
 
             foreach ($childFrame->getStatements() as $stmt) {
                 $foreach->addStatement($stmt);
             }
         }
 
-        $foreach->addStatement($ctx->assignVariableStmt($ctx->fetchDim($colVar, $keyVar), $valVar));
+        if ($metadata->keysGeneratedBy() !== TypedCollectionMetadata::KEY_INCREMENTING) {
+            if ($metadata->keysGeneratedBy() === TypedCollectionMetadata::KEY_FROM_VALUE) {
+                $keyVar = $valVar;
+            }
+
+            if ($metadata->getKeyType()) {
+                $ctx->pushFrame(new CompilationFrame($keyVar, $metadata->getKeyType()));
+                $compiler->_compileType($ctx, $metadata->getKeyType());
+                $keyFrame = $ctx->popFrame();
+                $keyVar = $keyFrame->getResult();
+
+                foreach ($keyFrame->getStatements() as $stmt) {
+                    $foreach->addStatement($stmt);
+                }
+            }
+        }
+
+        $foreach->addStatement($ctx->assignVariableStmt($ctx->fetchDim($colVar, $keyVar), $resultValVar));
 
         $frame->addStatement($foreach);
         $frame->setResult($colVar);
     }
-
 }

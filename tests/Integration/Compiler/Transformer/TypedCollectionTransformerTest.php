@@ -43,7 +43,7 @@ class TypedCollectionTransformerTest extends TransformerCompilationTestCase
     public function testPreserveKeys()
     {
         $t = $this->generateTransformer("foo", [
-            "foo" => new TypedCollectionMetadata(null, true, null, true)
+            "foo" => new TypedCollectionMetadata(null, true, null, TypedCollectionMetadata::KEY_PRESERVE)
         ]);
         $transformer = $this->getFakeTransformer();
 
@@ -67,5 +67,33 @@ class TypedCollectionTransformerTest extends TransformerCompilationTestCase
 
         $this->assertInstanceOf("ArrayObject", $result);
         $this->assertSame($input, $result->getArrayCopy());
+    }
+
+    public function testTransformWithKeyType()
+    {
+        $t = $this->generateTransformer("foo", [
+            "foo" => new TypedCollectionMetadata(null, true, null, TypedCollectionMetadata::KEY_PRESERVE, "bar"),
+            "bar" => new NumberFormatMetadata()
+        ]);
+        $transformer = $this->getFakeTransformer();
+
+        $input = [100000 => 1, 234212134 => 2, 17381349 => 3];
+        $result = $t($input, $transformer);
+
+        $this->assertSame(["100,000" => 1, "234,212,134" => 2, "17,381,349" => 3], $result);
+    }
+
+    public function testTransformWithValueAsKey()
+    {
+        $t = $this->generateTransformer("foo", [
+            "foo" => new TypedCollectionMetadata(null, true, null, TypedCollectionMetadata::KEY_FROM_VALUE, "bar"),
+            "bar" => new NumberFormatMetadata()
+        ]);
+        $transformer = $this->getFakeTransformer();
+
+        $input = [100000, 234212134, 17381349];
+        $result = $t($input, $transformer);
+
+        $this->assertSame(["100,000" => 100000, "234,212,134" => 234212134, "17,381,349" => 17381349], $result);
     }
 }

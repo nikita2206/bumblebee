@@ -4,6 +4,9 @@ namespace Bumblebee\Metadata;
 
 class TypedCollectionMetadata extends TypeMetadata
 {
+    const KEY_INCREMENTING = 0,
+          KEY_PRESERVE     = 1,
+          KEY_FROM_VALUE   = 2;
 
     protected $childrenType;
 
@@ -11,22 +14,26 @@ class TypedCollectionMetadata extends TypeMetadata
 
     protected $collectionClassName;
 
-    protected $preserveKeys;
+    protected $keysGeneratedBy;
+
+    protected $keyType;
 
     /**
      * @param string|null $childrenType
      * @param bool $transformIntoArray
      * @param string|null $collectionClassName
-     * @param bool $preserveKeys
+     * @param int $keysGeneratedBy
+     * @param string $keyType
      */
-    public function __construct($childrenType, $transformIntoArray = true, $collectionClassName = null, $preserveKeys = false)
+    public function __construct($childrenType, $transformIntoArray = true, $collectionClassName = null, $keysGeneratedBy = self::KEY_INCREMENTING, $keyType = null)
     {
         parent::__construct("typed_collection");
 
         $this->childrenType = $childrenType;
         $this->transformIntoArray = $transformIntoArray;
         $this->collectionClassName = $collectionClassName;
-        $this->preserveKeys = $preserveKeys;
+        $this->keysGeneratedBy = $keysGeneratedBy;
+        $this->keyType = $keyType;
     }
 
     /**
@@ -54,11 +61,18 @@ class TypedCollectionMetadata extends TypeMetadata
     }
 
     /**
-     * @return bool
+     * @return int
      */
-    public function shouldPreserveKeys()
+    public function keysGeneratedBy()
     {
-        return $this->preserveKeys;
+        return $this->keysGeneratedBy;
     }
 
+    /**
+     * @return null|string
+     */
+    public function getKeyType()
+    {
+        return $this->keyType;
+    }
 }
